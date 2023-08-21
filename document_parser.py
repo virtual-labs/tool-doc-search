@@ -1,7 +1,7 @@
-import markdown
 import requests
-import json
 import re
+from bs4 import BeautifulSoup
+import json
 
 
 class DocumentChunk:
@@ -12,8 +12,8 @@ class DocumentChunk:
         self.page_title = page_title
 
 
-################################################################
-
+###############################################################################################
+# fiftyone-docs-search reference
 
 def remove_footer(page_md):
     return page_md.split("[Next ![]")[0]
@@ -84,8 +84,6 @@ def remove_empty_code_blocks(page_md):
     ]
     return "```".join(parts)
 
-################################################################
-
 
 def remove_links(page_md):
     match = re.search('\[.*?\]\(.*?\)', page_md)
@@ -128,8 +126,6 @@ def reformat_markdown(page_md):
     page_md = remove_xml(page_md)
     return page_md
 
-################################################################
-
 
 def parse_page_markdown(page_md):
     page_md = remove_header(page_md)
@@ -146,6 +142,8 @@ def parse_page_markdown(page_md):
     page_md = reformat_markdown(page_md)
     return page_md
 
+###############################################################################################
+
 
 def parse_markdown_from_github(github_url):
     response = requests.get(github_url)
@@ -153,11 +151,44 @@ def parse_markdown_from_github(github_url):
     return markdown_content
 
 
-def extract_first_heading(markdown_content):
+def fetch_google_doc(doc_id):
+    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+    response = requests.get(url)
+    return convert_to_markdown(response.content)
+
+
+def convert_to_markdown(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    markdown = ""
+
+    for tag in soup.find_all():
+        if tag.name == 'h1':
+            heading_id = tag.get('id')
+            markdown += f"# {tag.text} {{#{heading_id}}}\n"
+        elif tag.name == 'h2':
+            heading_id = tag.get('id')
+            markdown += f"# {tag.text} {{#{heading_id}}}\n"
+        elif tag.name == 'h3':
+            heading_id = tag.get('id')
+            markdown += f"# {tag.text} {{#{heading_id}}}\n"
+        elif tag.name == 'p':
+            markdown += f"{tag.text}\n"
+        elif tag.name == 'ul':
+            for li in tag.find_all('li'):
+                markdown += f"- {li.text}\n"
+
+    return markdown
+
+
+def extract_first_heading(markdown_content, type):
     lines = markdown_content.split('\n')
     for line in lines:
         if line.startswith('#'):
-            return line[1:].strip()
+            match = re.search(r'\{#([^}]+)\}', line)
+            if match:
+                print(line.replace(match.group(0), '').strip())
+                return line.replace(match.group(0), '').replace("#", "").strip()
+            return line[1:].replace("#", "").strip()
     return "Untitled"
 
 
@@ -176,63 +207,130 @@ def extract_sections(markdown_content):
 
     if current_section["heading"] is not None:
         sections.append(current_section)
-
+    # print(json.dumps(sections, indent=4))
     return sections
 
 
-def generate_document_chunks(sections, base_github_url, page_title):
-    chunks = []
+def get_payload(page_title, heading, text, url, type):
+    return {
+        "page_title": page_title.strip(),
+        "heading": heading.strip(),
+        "text": text.strip(),
+        "url": url.strip(),
+        "type": type.strip()
+    }
 
+
+def get_point(text, page_title, heading, url, type):
+    return {
+        "content": text.strip(),
+        "payload": get_payload(page_title, heading, text, url, type)
+    }
+
+
+def get_google_doc_heading_id(heading):
+    match = re.search(r'\{#([^}]+)\}', heading)
+    if match:
+        extracted_id = match.group(1)
+        modified_str = heading.replace(match.group(0), '')
+        return extracted_id, modified_str
+    return None
+
+
+def get_link_hash(base_url, heading, type):
+    if type == "gdoc":
+        match = re.search(r'\{([^}]+)\}', heading)
+        if match:
+            extracted_id = match.group(1)
+            modified_heading = heading.replace(match.group(0), '')
+            gdoc_url_with_anchor = f"{base_url}#heading={extracted_id}"
+            return modified_heading, gdoc_url_with_anchor
+    elif type == "md":
+        hash = heading.replace(' ', '-').lower()
+        hash = hash[1:] if hash[0] == '-' else hash
+        github_url_with_anchor = f"{base_url}#{hash}"
+        return heading, github_url_with_anchor
+    return "", ""
+
+
+def generate_document_chunks(sections, base_url, page_title, type):
+    chunks = []
     for section in sections:
         heading = section["heading"].replace("#", "").replace(":", "").strip()
         cleaned_content = section["content"].replace(
             "\_", "_").replace("\*", "*").strip()
-        hash = heading.replace(' ', '-').lower()
-        hash = hash[1:] if hash[0] == '-' else hash
-        github_url_with_anchor = f"{base_github_url}#{hash}"
+        heading, link = get_link_hash(base_url, heading, type)
         chunk = DocumentChunk(
-            heading, heading + " :: " + page_title + " :: " + cleaned_content, github_url_with_anchor, page_title)
+            heading, f"{heading} of {page_title} :: {page_title} :: {cleaned_content}",
+            link, page_title)
         if cleaned_content:
             chunks.append(chunk)
 
     return chunks
 
 
-def get_chunks(url):
+def get_chunks_from_markdown(markdown_content, url, type):
+    markdown_content = parse_page_markdown(markdown_content)
+    page_title = extract_first_heading(markdown_content, type)
+    sections = extract_sections(markdown_content)
+
+    chunks = generate_document_chunks(sections, url, page_title, type)
+    data = []
+    for chunk in chunks:
+        data.append(
+            get_point(chunk.text, chunk.page_title,
+                      chunk.heading, chunk.url, type)
+        )
+    return data
+
+
+def get_chunks_from_github(url):
 
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
 
     markdown_content = parse_markdown_from_github(github_raw_url)
-    markdown_content = parse_page_markdown(markdown_content)
-    page_title = extract_first_heading(markdown_content)
-    sections = extract_sections(markdown_content)
-    chunks = generate_document_chunks(sections, url, page_title)
-    data = []
-    for chunk in chunks:
-        data.append({
-            "content": chunk.text,
-            "payload": {
-                "page_title": chunk.page_title,
-                "heading": chunk.heading,
-                "text": chunk.text,
-                "url": chunk.url
-            }
-        })
+    data = get_chunks_from_markdown(markdown_content, url, "md")
     return data
 
 
-def get_chunks_from_github(*url_list):
+def get_chunks_from_gdoc(url):
+    if url.endswith("/"):
+        url = url[:-1]
+    match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    if match:
+        doc_id = match.group(1)
+        markdown_content = fetch_google_doc(doc_id)
+        # print(markdown_content)
+        data = get_chunks_from_markdown(markdown_content, url, "gdoc")
+        return data
+    else:
+        print("No ID found in the URL")
+
+
+def get_chunks(*doc_list):
     data = []
-    for url in url_list:
-        chunks = get_chunks(url)
+    for doc in doc_list:
+        chunks = []
+        if doc["type"] == "md":
+            chunks = get_chunks_from_github(doc["url"])
+        elif doc["type"] == "gdoc":
+            chunks = get_chunks_from_gdoc(doc["url"])
         for chunk in chunks:
             data.append(chunk)
-    print(data)
+    # print(json.dumps(data, indent=4))
     return data
 
 
-# if __name__ == "__main__":
-#     url = "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/user-doc.md"
-#     get_chunks_from_github(url)
+if __name__ == "__main__":
+    get_chunks(
+        {
+            "url": "https://docs.google.com/document/d/1lGm88N-Z6fQM6v04k9NZTd-STZ0XYV6YRwIYT1JiSP8/",
+            "type": "gdoc"
+        },
+        # {
+        #     "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
+        #     "type": "md"
+        # }
+    )
