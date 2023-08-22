@@ -186,7 +186,7 @@ def extract_first_heading(markdown_content, type):
         if line.startswith('#'):
             match = re.search(r'\{#([^}]+)\}', line)
             if match:
-                print(line.replace(match.group(0), '').strip())
+                # print(line.replace(match.group(0), '').strip())
                 return line.replace(match.group(0), '').replace("#", "").strip()
             return line[1:].replace("#", "").strip()
     return "Untitled"
@@ -258,7 +258,7 @@ def generate_document_chunks(sections, base_url, page_title, type):
     for section in sections:
         heading = section["heading"].replace("#", "").replace(":", "").strip()
         cleaned_content = section["content"].replace(
-            "\_", "_").replace("\*", "*").strip()
+            "\_", "_").replace("\*", "*").replace('*', "").strip()
         heading, link = get_link_hash(base_url, heading, type)
         chunk = DocumentChunk(
             heading, f"{heading} of {page_title} :: {page_title} :: {cleaned_content}",
@@ -302,7 +302,6 @@ def get_chunks_from_gdoc(url):
     if match:
         doc_id = match.group(1)
         markdown_content = fetch_google_doc(doc_id)
-        # print(markdown_content)
         data = get_chunks_from_markdown(markdown_content, url, "gdoc")
         return data
     else:
@@ -329,8 +328,8 @@ if __name__ == "__main__":
             "url": "https://docs.google.com/document/d/1lGm88N-Z6fQM6v04k9NZTd-STZ0XYV6YRwIYT1JiSP8/",
             "type": "gdoc"
         },
-        # {
-        #     "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
-        #     "type": "md"
-        # }
+        {
+            "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
+            "type": "md"
+        }
     )
