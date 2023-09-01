@@ -15,7 +15,8 @@ class DocumentSearch:
         )
         self.collection_name = collection_name
 
-        # print(self.qdrant_client.count(collection_name=collection_name))
+        print("Connected to Qdrant : ", self.qdrant_client.count(
+            collection_name=collection_name))
 
     def insert_doc(self, type, url):
         if type == "md" or type == "gdoc":
@@ -55,6 +56,7 @@ class DocumentSearch:
                         vectors=vectors
                     ),
                 )
+            return data
         else:
             raise Exception("Invalid document type")
 
@@ -63,11 +65,10 @@ class DocumentSearch:
                           thresh=0.2,
                           doc_filter="Any",
                           page_title_filter=""):
-
         if search_query == '':
-            return
+            return [-1]
         if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
-            return
+            return [-1]
         page_title_filter = page_title_filter.strip()
 
         must_conditions = []
@@ -77,7 +78,7 @@ class DocumentSearch:
         if (page_title_filter != ''):
             must_conditions.append(models.FieldCondition(
                 key="page_title",
-                match=models.MatchText(text="content development platform")
+                match=models.MatchText(text=page_title_filter)
             ))
 
         filter = models.Filter(

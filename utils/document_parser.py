@@ -25,6 +25,7 @@ def remove_header(page_md):
     body_lines = []
     in_body = False
     for mdl in md_lines:
+        mdl = mdl.strip()
         if len(mdl) > 0 and mdl[0] == "#":
             in_body = True
         if in_body:
@@ -183,6 +184,7 @@ def convert_to_markdown(html_content):
 def extract_first_heading(markdown_content, type):
     lines = markdown_content.split('\n')
     for line in lines:
+        line = line.strip()
         if line.startswith('#'):
             match = re.search(r'\{#([^}]+)\}', line)
             if match:
@@ -198,6 +200,7 @@ def extract_sections(markdown_content):
     current_section = {"heading": None, "content": ""}
 
     for line in lines:
+        line = line.strip()
         if line.startswith('#'):
             if current_section["heading"] is not None:
                 sections.append(current_section)
@@ -289,7 +292,6 @@ def get_chunks_from_github(url):
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
-
     markdown_content = parse_markdown_from_github(github_raw_url)
     data = get_chunks_from_markdown(markdown_content, url, "md")
     return data
@@ -318,7 +320,7 @@ def get_chunks(*doc_list):
             chunks = get_chunks_from_gdoc(doc["url"])
         for chunk in chunks:
             data.append(chunk)
-    print(json.dumps(data, indent=4))
+    # print(json.dumps(data, indent=4))
 
     return data
 
