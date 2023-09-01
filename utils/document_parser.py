@@ -318,18 +318,19 @@ def get_chunks(*doc_list):
             chunks = get_chunks_from_gdoc(doc["url"])
         for chunk in chunks:
             data.append(chunk)
-    # print(json.dumps(data, indent=4))
+    print(json.dumps(data, indent=4))
+
     return data
 
 
 if __name__ == "__main__":
     get_chunks(
         {
-            "url": "https://docs.google.com/document/d/1lGm88N-Z6fQM6v04k9NZTd-STZ0XYV6YRwIYT1JiSP8/",
+            "url": "https://docs.google.com/document/d/1ye4X5LcUlicv4Q-VE7pxYrjW8yj0Uep6EO3gZpR4SDw/",
             "type": "gdoc"
         },
-        {
-            "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
-            "type": "md"
-        }
+        # {
+        #     "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
+        #     "type": "md"
+        # }
     )
