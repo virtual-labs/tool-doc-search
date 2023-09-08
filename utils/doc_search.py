@@ -81,7 +81,6 @@ class DocumentSearch:
                 return [-1]
             if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
                 return [-1]
-            print("i am here")
             page_title_filter = page_title_filter.strip()
             must_conditions = []
             if (doc_filter != 'Any'):
@@ -105,7 +104,6 @@ class DocumentSearch:
                 query_filter=filter,
                 score_threshold=thresh
             )
-            print(len(hits), search_query)
             search_results = []
             for hit in hits:
                 search_results.append({

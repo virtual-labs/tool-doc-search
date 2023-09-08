@@ -21,7 +21,8 @@ doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-GOOGLE_CLIENT_ID = "235297947063-u5kjaptgnu61j4kl5i4980l5h91e44au.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
 client_secrets_file = os.path.join(
     pathlib.Path(__file__).parent, "client_secret.json")
 
@@ -85,14 +86,6 @@ def callback():
 def logout():
     session.clear()
     return redirect("/")
-
-
-# def get_doc(credentials):
-#     service = build('drive', 'v3', credentials=credentials)
-#     doc_id = '1MQATKjor7Z_qpgChRwJw4BcRk22scFpCyMqN5FeqNn8'
-#     request = service.files().export(fileId=doc_id, mimeType='text/html')
-#     response = request.execute()
-#     # print("html content", response.decode('utf-8'))
 
 
 def insert_document(link, document_type, credentials):
