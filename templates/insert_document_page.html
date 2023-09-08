@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Insert document</title>
+  </head>
+  <body>
+    <h1>Insert Document</h1>
+    <form method="POST" action="/insert_doc/protected_area">
+      <label for="link">Document Link:</label>
+      <input type="text" id="link" name="link" required /><br /><br />
+
+      <label for="document_type">Select Document Type:</label>
+      <select id="document_type" name="document_type">
+        <option value="gdoc">Google Doc (gdoc)</option>
+        <option value="md">Markdown (md)</option>
+      </select>
+      <br /><br />
+
+      <input type="submit" value="Insert Document" />
+    </form>
+    <a href="/insert_doc/logout"><button>Logout</button></a>
+
+    {% if result is not none %}
+    <h2>Result:</h2>
+    <p>{{ result }}</p>
+    {% endif %}
+  </body>
+</html>

@@ -18,5 +18,6 @@ doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
 # print(len(result))
 # print(json.dumps(result, indent=4))
 
-doc_search.insert_doc(
-    type="md", url="https://github.com/virtual-labs/vlabs-systems/blob/main/src/systems-engineer-role/servers-compute-resources.md")
+
+# doc_search.insert_doc(
+#     type="md", url="https://github.com/virtual-labs/vlabs-systems/blob/main/src/systems-engineer-role/servers-compute-resources.md")

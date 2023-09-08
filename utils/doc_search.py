@@ -3,6 +3,8 @@ from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
 from utils.document_parser import get_chunks
 import uuid
+from error.CustomException import CustomException
+from flask import jsonify
 
 
 class DocumentSearch:
@@ -13,18 +15,27 @@ class DocumentSearch:
             url=url,
             api_key=api_key,
         )
+        # self.qdrant_client.recreate_collection(
+        #     collection_name=f"{collection_name}",
+        #     vectors_config=models.VectorParams(
+        #         size=self.encoder.get_sentence_embedding_dimension(),
+        #         distance=models.Distance.DOT
+        #     )
+        # )
         self.collection_name = collection_name
 
         print("Connected to Qdrant : ", self.qdrant_client.count(
             collection_name=collection_name))
+        print("Document Search Initialized...")
 
-    def insert_doc(self, type, url):
-        if type == "md" or type == "gdoc":
+    def insert_doc(self, type, url, credentials):
+        try:
             doc = {
                 "url": url,
                 "type": type
             }
-            data = get_chunks(doc)
+            data = get_chunks(doc, credentials)
+            # return []
             if len(data):
                 self.qdrant_client.delete(
                     collection_name=f"{self.collection_name}",
@@ -57,53 +68,59 @@ class DocumentSearch:
                     ),
                 )
             return data
-        else:
-            raise Exception("Invalid document type")
+        except Exception as e:
+            raise e
 
     def get_search_result(self, search_query,
                           limit=10,
                           thresh=0.2,
                           doc_filter="Any",
                           page_title_filter=""):
-        if search_query == '':
-            return [-1]
-        if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
-            return [-1]
-        page_title_filter = page_title_filter.strip()
+        try:
+            if search_query == '':
+                return [-1]
+            if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
+                return [-1]
+            print("i am here")
+            page_title_filter = page_title_filter.strip()
+            must_conditions = []
+            if (doc_filter != 'Any'):
+                must_conditions.append(models.FieldCondition(
+                    key="type",  match=models.MatchValue(value=doc_filter)))
+            if (page_title_filter != ''):
+                must_conditions.append(models.FieldCondition(
+                    key="page_title",
+                    match=models.MatchText(text=page_title_filter)
+                ))
 
-        must_conditions = []
-        if (doc_filter != 'Any'):
-            must_conditions.append(models.FieldCondition(
-                key="type",  match=models.MatchValue(value=doc_filter)))
-        if (page_title_filter != ''):
-            must_conditions.append(models.FieldCondition(
-                key="page_title",
-                match=models.MatchText(text=page_title_filter)
-            ))
+            filter = models.Filter(
+                must=must_conditions
+            ) if doc_filter != 'Any' or page_title_filter != "" else None
 
-        filter = models.Filter(
-            must=must_conditions
-        ) if doc_filter != 'Any' or page_title_filter != "" else None
+            hits = self.qdrant_client.search(
+                collection_name="my_doc",
+                query_vector=self.encoder.encode(
+                    search_query).tolist(),
+                limit=int(limit),
+                query_filter=filter,
+                score_threshold=thresh
+            )
+            print(len(hits), search_query)
+            search_results = []
+            for hit in hits:
+                search_results.append({
+                    "accessibility": hit.payload["accessibility"],
+                    "type": hit.payload["type"],
+                    "url": hit.payload["url"],
+                    "score": hit.score,
+                    "heading": hit.payload["heading"],
+                    "document": hit.payload["page_title"],
+                    "text": "" if hit.payload["accessibility"] == "private" else hit.payload["text"].split("::")[2].strip(),
+                })
 
-        hits = self.qdrant_client.search(
-            collection_name="my_doc",
-            query_vector=self.encoder.encode(
-                search_query).tolist(),
-            limit=int(limit),
-            query_filter=filter,
-            score_threshold=thresh
-        )
-        search_results = []
-        for hit in hits:
-            search_results.append({
-                "type": hit.payload["type"],
-                "url": hit.payload["url"],
-                "score": hit.score,
-                "heading": hit.payload["heading"],
-                "document": hit.payload["page_title"],
-                "text": hit.payload["text"].split("::")[2].strip(),
-            })
-        return search_results
+            return search_results
+        except Exception as e:
+            raise CustomException(str(e), 500)
 
     # initializing functions
 
@@ -162,5 +179,5 @@ class DocumentSearch:
                 "type": "gdoc"
             }
         ]
-        for doc in docs:
-            self.insert_doc(type=doc["type"], url=doc["url"])
+        # for doc in docs:
+        #     self.insert_doc(type=doc["type"], url=doc["url"])

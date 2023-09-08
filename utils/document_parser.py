@@ -1,7 +1,9 @@
 import requests
 import re
 from bs4 import BeautifulSoup
+from error.CustomException import NotFoundException
 import json
+from googleapiclient.discovery import build
 
 
 class DocumentChunk:
@@ -158,6 +160,17 @@ def fetch_google_doc(doc_id):
     return convert_to_markdown(response.content)
 
 
+def fetch_google_doc_private(doc_id, credentials):
+    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+    response = requests.get(url)
+    service = build('drive', 'v3', credentials=credentials)
+    # doc_id = '1MQATKjor7Z_qpgChRwJw4BcRk22scFpCyMqN5FeqNn8'
+    request = service.files().export(fileId=doc_id, mimeType='text/html')
+    response = request.execute()
+    # print("html content", )
+    return convert_to_markdown(response.decode('utf-8'))
+
+
 def convert_to_markdown(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     markdown = ""
@@ -288,7 +301,6 @@ def get_chunks_from_markdown(markdown_content, url, type):
 
 
 def get_chunks_from_github(url):
-
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
@@ -297,42 +309,66 @@ def get_chunks_from_github(url):
     return data
 
 
-def get_chunks_from_gdoc(url):
+def get_gdoc_accessiblility(link, document_id=""):
+    viewer_url = f'https://docs.google.com/document/d/{document_id}/export?format=html'
+    response = requests.get(link)
+    if 'ServiceLogin' in response.url:
+        return "private"
+    elif response.status_code == 200:
+        return "public"
+    elif response.status_code == 404:
+        raise NotFoundException("Document not found. Invalid document link")
+
+
+def get_chunks_from_gdoc(url, credentials):
     if url.endswith("/"):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    accessibility = get_gdoc_accessiblility(url)
     if match:
         doc_id = match.group(1)
-        markdown_content = fetch_google_doc(doc_id)
+        markdown_content = ""
+        if accessibility == "public":
+            markdown_content = fetch_google_doc(doc_id)
+        elif accessibility == "private":
+            markdown_content = fetch_google_doc_private(doc_id, credentials)
         data = get_chunks_from_markdown(markdown_content, url, "gdoc")
-        return data
+        newdata = []
+        for d in data:
+            newpayload = d["payload"]
+            newpayload["text"] = "" if accessibility == "private" else newpayload["text"]
+            newpayload["accessibility"] = accessibility
+            newdata.append({
+                "content": d["content"],
+                "payload": newpayload
+            })
+        return newdata
     else:
         print("No ID found in the URL")
 
 
-def get_chunks(*doc_list):
-    data = []
-    for doc in doc_list:
+def get_chunks(doc, credentials):
+    try:
         chunks = []
         if doc["type"] == "md":
             chunks = get_chunks_from_github(doc["url"])
         elif doc["type"] == "gdoc":
-            chunks = get_chunks_from_gdoc(doc["url"])
-        for chunk in chunks:
-            data.append(chunk)
-    # print(json.dumps(data, indent=4))
-
-    return data
+            chunks = get_chunks_from_gdoc(doc["url"], credentials)
+        # print(json.dumps(chunks, indent=4))
+        return chunks
+    except Exception as e:
+        raise e
 
 
 if __name__ == "__main__":
-    get_chunks(
-        {
-            "url": "https://docs.google.com/document/d/1ye4X5LcUlicv4Q-VE7pxYrjW8yj0Uep6EO3gZpR4SDw/",
-            "type": "gdoc"
-        },
-        # {
-        #     "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
-        #     "type": "md"
-        # }
-    )
+    pass
+    # get_chunks(
+    #     {
+    #         "url": "https://docs.google.com/document/d/1ye4X5LcUlicv4Q-VE7pxYrjW8yj0Uep6EO3gZpR4SDw/",
+    #         "type": "gdoc"
+    #     },
+    #     # {
+    #     #     "url": "https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md",
+    #     #     "type": "md"
+    #     # }
+    # )
