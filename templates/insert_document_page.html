@@ -2,27 +2,92 @@
 <html>
   <head>
     <title>Insert document</title>
+    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="stylesheet" href="/static/insert_doc.css" />
   </head>
   <body>
-    <h1>Insert Document</h1>
-    <form method="POST" action="/insert_doc/protected_area">
-      <label for="link">Document Link:</label>
-      <input type="text" id="link" name="link" required /><br /><br />
+    <div class="navbar-no-shadow">
+      <div
+        af-el="navbar"
+        data-animation="default"
+        data-collapse="medium"
+        data-duration="400"
+        data-easing="ease"
+        data-easing2="ease"
+        role="banner"
+        class="navbar-no-shadow-container w-nav"
+      >
+        <div class="navbar-wrapper">
+          <img
+            src="/static/download.png"
+            loading="lazy"
+            width="80"
+            af-el="nav-img"
+            alt=""
+          />
+          <div af-el="nav-title" class="text-block">Document Search</div>
+          <div style="float: right; margin-left: auto">
+            <span style="color: white; font-size: 20px">{{ user_name }}</span>
+            <a href="/insert_doc/logout"
+              ><button class="insert-doc-button">Logout</button></a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <label for="document_type">Select Document Type:</label>
-      <select id="document_type" name="document_type">
-        <option value="gdoc">Google Doc (gdoc)</option>
-        <option value="md">Markdown (md)</option>
-      </select>
-      <br /><br />
+    <style>
+      /* Add any additional styling you may need */
+    </style>
 
-      <input type="submit" value="Insert Document" />
-    </form>
-    <a href="/insert_doc/logout"><button>Logout</button></a>
+    <div class="form-container">
+      <h2>Insert Document</h2>
+      <form method="POST" action="/insert_doc/protected_area">
+        <label for="link">Document Link:</label>
+        <input type="text" id="link" name="link" required />
 
-    {% if result is not none %}
-    <h2>Result:</h2>
-    <p>{{ result }}</p>
-    {% endif %}
+        <label for="document_type">Select Document Type:</label>
+        <select id="document_type" name="document_type">
+          <option value="gdoc">Google Doc (gdoc)</option>
+          <option value="md">Markdown (md)</option>
+        </select>
+
+        <input type="submit" value="Insert Document" />
+      </form>
+
+      {% if result is not none %}
+      <div id="result-pane"></div>
+      <script>
+        var result = JSON.parse(`{{ result | tojson | safe}}`);
+        let resultPane = document.getElementById("result-pane");
+        console.log(result);
+        if (result.hasOwnProperty("error")) {
+          resultPane.innerHTML += "<h3>Error occurred</h3>";
+          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
+          resultPane.innerHTML +=
+            "<span class='result-attr'>Status Code</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.status_code}</p>`;
+        } else if (
+          result.hasOwnProperty("chunks_count") &&
+          result.hasOwnProperty("page_title") &&
+          result.hasOwnProperty("accessibility")
+        ) {
+          resultPane.innerHTML += "<h3>Success</h3>";
+          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
+          resultPane.innerHTML += "<span class='result-attr'>Page Title</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.page_title}</p>`;
+          resultPane.innerHTML +=
+            "<span class='result-attr'>Accessibility</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.accessibility}</p>`;
+        }
+        document.writeln("");
+        setTimeout(() => {
+          resultPane.remove();
+        }, 20000);
+      </script>
+      {% endif %}
+    </div>
   </body>
 </html>

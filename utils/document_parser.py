@@ -306,7 +306,11 @@ def get_chunks_from_github(url):
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     markdown_content = parse_markdown_from_github(github_raw_url)
     data = get_chunks_from_markdown(markdown_content, url, "md")
-    return data
+    newdata = []
+    for chunk in data:
+        chunk["payload"]["accessibility"] = "public"
+        newdata.append(chunk)
+    return newdata
 
 
 def get_gdoc_accessiblility(link, document_id=""):
@@ -354,7 +358,7 @@ def get_chunks(doc, credentials):
             chunks = get_chunks_from_github(doc["url"])
         elif doc["type"] == "gdoc":
             chunks = get_chunks_from_gdoc(doc["url"], credentials)
-        # print(json.dumps(chunks, indent=4))
+        print(json.dumps(chunks, indent=4))
         return chunks
     except Exception as e:
         raise e

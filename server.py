@@ -2,9 +2,13 @@ from flask import Flask
 from blueprints.insert_doc import insert_doc
 from blueprints.search_doc import search_doc
 import uuid
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
+
+CORS(app, resources={r'/*': {'origins': '*'}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/')

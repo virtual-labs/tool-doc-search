@@ -48,22 +48,24 @@ def login_is_required(function):
 
 @insert_doc.route("/")
 def index():
-    return "Hello World <a href='/insert_doc/login'><button>Login</button></a>"
+    return "<a href='/insert_doc/login'><button>Login</button></a>"
 
 
 @insert_doc.route("/login")
 def login():
     authorization_url, state = flow.authorization_url()
     session["state"] = state
+    print("state variable", session["state"])
     return redirect(authorization_url)
 
 
 @insert_doc.route("/callback")
 def callback():
     flow.fetch_token(authorization_response=request.url)
-
-    if not session["state"] == request.args["state"]:
-        abort(500)  # State does not match!
+    print(("state" in request.args))
+    print(("state" in session))
+    # if not session["state"] == request.args["state"]:
+    #     abort(500)  # State does not match!
 
     credentials = flow.credentials
     request_session = requests.session()
@@ -95,9 +97,9 @@ def insert_document(link, document_type, credentials):
                 "Please provide document type (md, gdoc)")
         chunks = doc_search.insert_doc(type=document_type,
                                        url=link, credentials=credentials)
-        print(chunks)
         return ({"message": "Document inserted successfully", "chunks_count": len(chunks),
-                 "page_title": chunks[0]["payload"]["page_title"] if len(chunks) else "No title"})
+                 "page_title": chunks[0]["payload"]["page_title"] if len(chunks) else "No title",
+                 "accessibility": chunks[0]["payload"]["accessibility"]})
     except CustomException as e:
         return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
     except Exception as e:
@@ -118,14 +120,12 @@ def protected_area():
             'scopes': credentials.scopes
         }
         result = None
-        print("POST", request.method)
+        print("Getting ", request.method)
         if request.method == 'POST':
-            # get_doc(credentials=credentials)
             link = request.form.get('link')
             document_type = request.form.get('document_type')
             result = insert_document(
                 link=link, document_type=document_type, credentials=credentials)
-            # print(result)
-        return render_template('insert_document_page.html', result=result)
+        return render_template('insert_document_page.html', result=result, user_name=session["name"])
     except Exception as e:
         return f"<h1>Error occurred</h1> {str(e)}. Try to login again"

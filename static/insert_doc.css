@@ -1,0 +1,78 @@
+body {
+    background-image: url('/static/Background.png');
+    /* Replace 'your-image.jpg' with the path to your image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    /* This ensures the background stays fixed even when scrolling */
+}
+
+.form-container {
+    background-color: rgba(246, 246, 246, 0.9);
+    color: #545454;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    /* Adjust the width as needed */
+    margin: 0 auto;
+    /* Center the container horizontally */
+    margin-top: 10px;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    /* IE 9 */
+    -webkit-transform: translate(-50%, -50%);
+}
+
+#result-pane {
+    margin-top: 10px;
+    background-color: #d8d7d7;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.result-attr {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Styling for the form elements */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+input[type="text"],
+select {
+    background-color: #e7e7e7;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+input[type="submit"] {
+    background-color: #28bfa4;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #21a088;
+}
+
+input[type="submit"]:active {
+    background-color: #1e7f6d;
+}
