@@ -1,14 +1,16 @@
+/* google app engine for flask */
+
 body {
     background-image: url('/static/Background.png');
     /* Replace 'your-image.jpg' with the path to your image */
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    /* This ensures the background stays fixed even when scrolling */
 }
 
+/* #ffd858 */
 .form-container {
-    background-color: rgba(246, 246, 246, 0.9);
+    background-color: #eec262;
     color: #545454;
     padding: 20px;
     border-radius: 10px;
@@ -61,7 +63,7 @@ select {
 }
 
 input[type="submit"] {
-    background-color: #28bfa4;
+    background-color: #8ac756;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -70,9 +72,9 @@ input[type="submit"] {
 }
 
 input[type="submit"]:hover {
-    background-color: #21a088;
+    background-color: #80b84f;
 }
 
 input[type="submit"]:active {
-    background-color: #1e7f6d;
+    background-color: #66933f;
 }

@@ -1,7 +1,7 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-from error.CustomException import NotFoundException
+from error.CustomException import NotFoundException, BadRequestException
 import json
 from googleapiclient.discovery import build
 
@@ -227,20 +227,22 @@ def extract_sections(markdown_content):
     return sections
 
 
-def get_payload(page_title, heading, text, url, type):
+def get_payload(page_title, heading, text, url, type, base_url, user):
     return {
         "page_title": page_title.strip(),
         "heading": heading.strip(),
         "text": text.strip(),
         "url": url.strip(),
-        "type": type.strip()
+        "type": type.strip(),
+        "base_url": base_url.strip(),
+        "inserted_by": user.strip()
     }
 
 
-def get_point(text, page_title, heading, url, type):
+def get_point(text, page_title, heading, url, type, base_url, user):
     return {
         "content": text.strip(),
-        "payload": get_payload(page_title, heading, text, url, type)
+        "payload": get_payload(page_title, heading, text, url, type, base_url, user)
     }
 
 
@@ -285,7 +287,7 @@ def generate_document_chunks(sections, base_url, page_title, type):
     return chunks
 
 
-def get_chunks_from_markdown(markdown_content, url, type):
+def get_chunks_from_markdown(markdown_content, url, type, user):
     markdown_content = parse_page_markdown(markdown_content)
     page_title = extract_first_heading(markdown_content, type)
     sections = extract_sections(markdown_content)
@@ -295,17 +297,19 @@ def get_chunks_from_markdown(markdown_content, url, type):
     for chunk in chunks:
         data.append(
             get_point(chunk.text, chunk.page_title,
-                      chunk.heading, chunk.url, type)
+                      chunk.heading, chunk.url, type, url, user)
         )
     return data
 
 
-def get_chunks_from_github(url):
+def get_chunks_from_github(url, user):
+    if not url.endswith("md"):
+        raise BadRequestException(f'Invalid url format {url}')
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     markdown_content = parse_markdown_from_github(github_raw_url)
-    data = get_chunks_from_markdown(markdown_content, url, "md")
+    data = get_chunks_from_markdown(markdown_content, url, "md", user)
     newdata = []
     for chunk in data:
         chunk["payload"]["accessibility"] = "public"
@@ -324,7 +328,7 @@ def get_gdoc_accessiblility(link, document_id=""):
         raise NotFoundException("Document not found. Invalid document link")
 
 
-def get_chunks_from_gdoc(url, credentials):
+def get_chunks_from_gdoc(url, credentials, user):
     if url.endswith("/"):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
@@ -336,7 +340,7 @@ def get_chunks_from_gdoc(url, credentials):
             markdown_content = fetch_google_doc(doc_id)
         elif accessibility == "private":
             markdown_content = fetch_google_doc_private(doc_id, credentials)
-        data = get_chunks_from_markdown(markdown_content, url, "gdoc")
+        data = get_chunks_from_markdown(markdown_content, url, "gdoc", user)
         newdata = []
         for d in data:
             newpayload = d["payload"]
@@ -351,13 +355,13 @@ def get_chunks_from_gdoc(url, credentials):
         print("No ID found in the URL")
 
 
-def get_chunks(doc, credentials):
+def get_chunks(doc, credentials, user):
     try:
         chunks = []
         if doc["type"] == "md":
-            chunks = get_chunks_from_github(doc["url"])
+            chunks = get_chunks_from_github(doc["url"], user)
         elif doc["type"] == "gdoc":
-            chunks = get_chunks_from_gdoc(doc["url"], credentials)
+            chunks = get_chunks_from_gdoc(doc["url"], credentials, user)
         print(json.dumps(chunks, indent=4))
         return chunks
     except Exception as e:

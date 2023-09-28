@@ -96,7 +96,7 @@ def insert_document(link, document_type, credentials):
             raise BadRequestException(
                 "Please provide document type (md, gdoc)")
         chunks = doc_search.insert_doc(type=document_type,
-                                       url=link, credentials=credentials)
+                                       url=link, credentials=credentials, user=session["name"])
         return ({"message": "Document inserted successfully", "chunks_count": len(chunks),
                  "page_title": chunks[0]["payload"]["page_title"] if len(chunks) else "No title",
                  "accessibility": chunks[0]["payload"]["accessibility"]})

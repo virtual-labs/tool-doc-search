@@ -5,6 +5,7 @@ from utils.document_parser import get_chunks
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
+import json
 
 
 class DocumentSearch:
@@ -15,27 +16,34 @@ class DocumentSearch:
             url=url,
             api_key=api_key,
         )
-        # self.qdrant_client.recreate_collection(
-        #     collection_name=f"{collection_name}",
-        #     vectors_config=models.VectorParams(
-        #         size=self.encoder.get_sentence_embedding_dimension(),
-        #         distance=models.Distance.DOT
-        #     )
-        # )
+
         self.collection_name = collection_name
 
         print("Connected to Qdrant : ", self.qdrant_client.count(
             collection_name=collection_name))
         print("Document Search Initialized...")
 
-    def insert_doc(self, type, url, credentials):
+    def reset_database(self):
+        # recreate db
+        self.qdrant_client.recreate_collection(
+            collection_name=f"{self.collection_name}",
+            vectors_config=models.VectorParams(
+                size=self.encoder.get_sentence_embedding_dimension(),
+                distance=models.Distance.DOT
+            )
+        )
+        self.create_index()
+
+    def insert_doc(self, type, url, credentials, user="unknown"):
         try:
             doc = {
                 "url": url,
                 "type": type
             }
-            data = get_chunks(doc, credentials)
+            data = get_chunks(doc, credentials, user)
+            print(json.dumps(data, indent=4))
             # return []
+
             if len(data):
                 self.qdrant_client.delete(
                     collection_name=f"{self.collection_name}",
@@ -43,9 +51,9 @@ class DocumentSearch:
                         filter=models.Filter(
                             must=[
                                 models.FieldCondition(
-                                    key="page_title",
+                                    key="base_url",
                                     match=models.MatchValue(
-                                        value=data[0]["payload"]["page_title"]),
+                                        value=data[0]["payload"]["base_url"]),
                                 ),
                             ],
                         )
@@ -131,6 +139,17 @@ class DocumentSearch:
                 tokenizer=models.TokenizerType.WORD,
                 min_token_len=2,
                 max_token_len=15,
+                lowercase=True,
+            )
+        )
+        self.qdrant_client.create_payload_index(
+            collection_name=f"{self.collection_name}",
+            field_name="base_url",
+            field_schema=models.TextIndexParams(
+                type="text",
+                tokenizer=models.TokenizerType.WORD,
+                min_token_len=2,
+                max_token_len=80,
                 lowercase=True,
             )
         )

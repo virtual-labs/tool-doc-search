@@ -79,6 +79,9 @@
           resultPane.innerHTML += "<span class='result-attr'>Page Title</span>";
           resultPane.innerHTML += `<p class='result-msg'>${result.page_title}</p>`;
           resultPane.innerHTML +=
+            "<span class='result-attr'>Chunk count</span>";
+          resultPane.innerHTML += `<p class='result-msg'>${result.chunks_count}</p>`;
+          resultPane.innerHTML +=
             "<span class='result-attr'>Accessibility</span>";
           resultPane.innerHTML += `<p class='result-msg'>${result.accessibility}</p>`;
         }
