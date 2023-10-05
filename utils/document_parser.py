@@ -366,6 +366,30 @@ def get_chunks(doc, credentials, user):
         return chunks
     except Exception as e:
         raise e
+    
+def get_chunks_batch(docs, credentials, user):
+    try:
+        chunks = []
+        base_urls = []
+        for idx, doc in enumerate(docs):
+            try:
+                chunk = []
+                if doc["type"] == "md":
+                    chunk = get_chunks_from_github(doc["url"], user)
+                elif doc["type"] == "gdoc":
+                    chunk = get_chunks_from_gdoc(doc["url"], credentials, user)
+                for ch in chunk:
+                    chunks.append(ch)
+                # chunks.append(chunk)
+                base_urls.append(doc["url"])
+            except Exception as e:
+                raise Exception(f"Error occurred while parsing document {idx+1}, {str(e)}")
+        # print(len(chunks))
+        # print(json.dumps(base_urls, indent=4))
+        # print(json.dumps(chunks, indent=4))
+        return chunks, base_urls
+    except Exception as e:
+        raise e
 
 
 if __name__ == "__main__":

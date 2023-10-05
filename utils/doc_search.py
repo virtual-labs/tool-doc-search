@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from utils.document_parser import get_chunks
+from utils.document_parser import get_chunks, get_chunks_batch
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
@@ -19,12 +19,15 @@ class DocumentSearch:
 
         self.collection_name = collection_name
 
+        # self.reset_database()
+
         print("Connected to Qdrant : ", self.qdrant_client.count(
             collection_name=collection_name))
         print("Document Search Initialized...")
 
     def reset_database(self):
         # recreate db
+        print("Recreating database")
         self.qdrant_client.recreate_collection(
             collection_name=f"{self.collection_name}",
             vectors_config=models.VectorParams(
@@ -76,6 +79,72 @@ class DocumentSearch:
                     ),
                 )
             return data
+        except Exception as e:
+            raise e
+
+    def insert_doc_batch(self, docs, credentials, user="unknown"):
+        try:
+            
+            data, base_urls = get_chunks_batch(docs, credentials, user)
+            print("got chunks")
+            if len(data):
+                self.qdrant_client.delete(
+                    collection_name=f"{self.collection_name}",
+                    points_selector=models.FilterSelector(
+                        filter=models.Filter(
+                            should=[
+                                models.FieldCondition(
+                                    key="base_url",
+                                    match=models.MatchValue(value=base_url),
+                                ) for base_url in base_urls
+                            ]
+                        )
+                    ),
+                )
+                print("Deleted docs")
+                payloads = []
+                vectors = []
+                ids = []
+                for chunk in data:
+                    # print(chunk)
+                    ids.append(uuid.uuid4().int >> 64)
+                    vectors.append(self.encoder.encode(
+                        chunk["content"]).tolist())
+                    payloads.append(chunk["payload"])
+                print("Encoded docs")
+                self.qdrant_client.upsert(
+                    collection_name=f"{self.collection_name}",
+                    points=models.Batch(
+                        ids=ids,
+                        payloads=payloads,
+                        vectors=vectors
+                    ),
+                )
+                print("Inserted docs")
+                results = []
+                results.append({
+                    "page_title": data[0]["payload"]["page_title"],
+                    "base_url": data[0]["payload"]["base_url"],
+                    "sections": 1,
+                    "accessibility":data[0]["payload"]["accessibility"]
+                })
+
+                for i in range(1, len(data)):
+                    if data[i]["payload"]["base_url"] == results[-1]["base_url"]:
+                        results[-1]["sections"] += 1
+                    else:
+                        results.append({
+                            "page_title": data[i]["payload"]["page_title"],
+                            "base_url": data[i]["payload"]["base_url"],
+                            "sections": 1,
+                            "accessibility":data[i]["payload"]["accessibility"]
+                        })
+
+                resultObj = {
+                    "message": f"Document{'s' if len(results) > 1 else ''} inserted successfully", "result": results}
+                print(json.dumps(resultObj, indent=4))
+                return resultObj
+            else: raise Exception("Document(s) have no headings.") 
         except Exception as e:
             raise e
 

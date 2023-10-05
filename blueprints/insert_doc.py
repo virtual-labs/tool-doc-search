@@ -39,6 +39,9 @@ flow = Flow.from_client_secrets_file(
 
 def login_is_required(function):
     def wrapper(*args, **kwargs):
+        print("in wrapper", "google_id" not in session, session)
+        if ("google_id" in session):
+            print(session["google_id"])
         if "google_id" not in session:
             return redirect('/insert_doc/login')  # Authorization required
         else:
@@ -87,6 +90,8 @@ def callback():
 @insert_doc.route("/logout")
 def logout():
     session.clear()
+    print("logged out")
+    print(session)
     return redirect("/")
 
 
@@ -100,6 +105,15 @@ def insert_document(link, document_type, credentials):
         return ({"message": "Document inserted successfully", "chunks_count": len(chunks),
                  "page_title": chunks[0]["payload"]["page_title"] if len(chunks) else "No title",
                  "accessibility": chunks[0]["payload"]["accessibility"]})
+    except CustomException as e:
+        return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
+    except Exception as e:
+        return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
+    
+def insert_document_batch(docs, credentials):
+    try:
+        result = doc_search.insert_doc_batch(docs=docs, credentials=credentials, user=session["name"])
+        return result
     except CustomException as e:
         return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
     except Exception as e:
@@ -122,10 +136,22 @@ def protected_area():
         result = None
         print("Getting ", request.method)
         if request.method == 'POST':
-            link = request.form.get('link')
-            document_type = request.form.get('document_type')
-            result = insert_document(
-                link=link, document_type=document_type, credentials=credentials)
+            selected_value = int(request.form['division_count'])
+            docs = []
+            for i in range(selected_value):
+                url = request.form.get(f'url_{i}', '')
+                tag = request.form.get(f'hidden_{i}', '')
+                docs.append({"url":url, "type":tag})
+            print(docs)
+            result = insert_document_batch(docs=docs, credentials=credentials)
         return render_template('insert_document_page.html', result=result, user_name=session["name"])
+    except Exception as e:
+        return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
+
+
+@insert_doc.route("/test", methods=['GET', 'POST'])
+def protected_area():
+    try:
+        return render_template('insert_document_page.html', result=None, user_name="unknown")
     except Exception as e:
         return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
