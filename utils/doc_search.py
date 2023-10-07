@@ -10,12 +10,14 @@ import json
 
 class DocumentSearch:
 
-    def __init__(self, url, api_key, collection_name) -> None:
+    def __init__(self, url, api_key, collection_name, doc_record=None) -> None:
         self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
         self.qdrant_client = QdrantClient(
             url=url,
             api_key=api_key,
         )
+
+        self.doc_record = doc_record
 
         self.collection_name = collection_name
 
@@ -78,13 +80,14 @@ class DocumentSearch:
                         vectors=vectors
                     ),
                 )
+
             return data
         except Exception as e:
             raise e
 
     def insert_doc_batch(self, docs, credentials, user="unknown"):
         try:
-            
+
             data, base_urls = get_chunks_batch(docs, credentials, user)
             print("got chunks")
             if len(data):
@@ -121,12 +124,21 @@ class DocumentSearch:
                     ),
                 )
                 print("Inserted docs")
+
+                records = []
                 results = []
                 results.append({
                     "page_title": data[0]["payload"]["page_title"],
                     "base_url": data[0]["payload"]["base_url"],
                     "sections": 1,
-                    "accessibility":data[0]["payload"]["accessibility"]
+                    "accessibility": data[0]["payload"]["accessibility"]
+                })
+                records.append({
+                    "page_title": data[0]["payload"]["page_title"],
+                    "base_url": data[0]["payload"]["base_url"],
+                    "inserted_by": data[0]["payload"]["inserted_by"],
+                    "accessibility": data[0]["payload"]["accessibility"],
+                    "type": data[0]["payload"]["type"]
                 })
 
                 for i in range(1, len(data)):
@@ -137,14 +149,25 @@ class DocumentSearch:
                             "page_title": data[i]["payload"]["page_title"],
                             "base_url": data[i]["payload"]["base_url"],
                             "sections": 1,
-                            "accessibility":data[i]["payload"]["accessibility"]
+                            "accessibility": data[i]["payload"]["accessibility"]
+                        })
+                        records.append({
+                            "page_title": data[i]["payload"]["page_title"],
+                            "base_url": data[i]["payload"]["base_url"],
+                            "inserted_by": data[i]["payload"]["inserted_by"],
+                            "accessibility": data[i]["payload"]["accessibility"],
+                            "type": data[i]["payload"]["type"]
                         })
 
+                print("records passed", json.dumps(records, indent=4))
+                self.doc_record.insert_entry(records)
                 resultObj = {
                     "message": f"Document{'s' if len(results) > 1 else ''} inserted successfully", "result": results}
                 print(json.dumps(resultObj, indent=4))
+
                 return resultObj
-            else: raise Exception("Document(s) have no headings.") 
+            else:
+                raise Exception("Document(s) have no headings.")
         except Exception as e:
             raise e
 
@@ -174,7 +197,7 @@ class DocumentSearch:
             ) if doc_filter != 'Any' or page_title_filter != "" else None
 
             hits = self.qdrant_client.search(
-                collection_name="my_doc",
+                collection_name=self.collection_name,
                 query_vector=self.encoder.encode(
                     search_query).tolist(),
                 limit=int(limit),

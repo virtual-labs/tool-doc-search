@@ -12,12 +12,19 @@ from error.CustomException import CustomException, BadRequestException
 
 
 from utils.doc_search import DocumentSearch
+from utils.doc_record import DocumentRecord
 
 insert_doc = Blueprint('insert_doc', __name__, url_prefix='/insert_doc')
 load_dotenv()
+
+doc_record = DocumentRecord(url=os.getenv("QDRANT_URL"),
+                            api_key=os.getenv(
+    "QDRANT_API"),
+    collection_name=os.getenv("QDRANT_RECORD_COLLECTION"))
 doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
                             api_key=os.getenv("QDRANT_API"),
-                            collection_name=os.getenv("QDRANT_COLLECTION"))
+                            collection_name=os.getenv("QDRANT_COLLECTION"),
+                            doc_record=doc_record)
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
@@ -84,7 +91,7 @@ def callback():
 
     session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
-    return redirect("/insert_doc/protected_area")
+    return redirect("/insert_doc/protected_area/insert")
 
 
 @insert_doc.route("/logout")
@@ -109,10 +116,12 @@ def insert_document(link, document_type, credentials):
         return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
     except Exception as e:
         return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
-    
+
+
 def insert_document_batch(docs, credentials):
     try:
-        result = doc_search.insert_doc_batch(docs=docs, credentials=credentials, user=session["name"])
+        result = doc_search.insert_doc_batch(
+            docs=docs, credentials=credentials, user=session["name"])
         return result
     except CustomException as e:
         return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
@@ -120,7 +129,7 @@ def insert_document_batch(docs, credentials):
         return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
 
 
-@insert_doc.route("/protected_area", methods=['GET', 'POST'])
+@insert_doc.route("/protected_area/<page>", methods=['GET', 'POST'])
 @login_is_required
 def protected_area():
     try:
@@ -135,23 +144,70 @@ def protected_area():
         }
         result = None
         print("Getting ", request.method)
-        if request.method == 'POST':
-            selected_value = int(request.form['division_count'])
-            docs = []
-            for i in range(selected_value):
-                url = request.form.get(f'url_{i}', '')
-                tag = request.form.get(f'hidden_{i}', '')
-                docs.append({"url":url, "type":tag})
-            print(docs)
-            result = insert_document_batch(docs=docs, credentials=credentials)
-        return render_template('insert_document_page.html', result=result, user_name=session["name"])
+        page = "update"
+        if page == "insert":
+            if request.method == 'POST':
+                selected_value = int(request.form['division_count'])
+                docs = []
+                for i in range(selected_value):
+                    url = request.form.get(f'url_{i}', '')
+                    tag = request.form.get(f'hidden_{i}', '')
+                    docs.append({"url": url, "type": tag})
+                print(docs)
+                result = insert_document_batch(
+                    docs=docs, credentials=credentials)
+            return render_template('insert_document_page.html', result=result, user_name=session["name"])
+        elif page == "update":
+            if request.method == 'POST':
+                docs = request.json
+                result = insert_document_batch(
+                    docs=docs, credentials=credentials)
+                return jsonify(result)
+            return render_template('update_document_page.html')
+
+    except Exception as e:
+        return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
+
+
+# # Define your decorator
+# def login_is_required_2(function):
+#     def wrapper1(*args, **kwargs):
+#         print("in wrapper", "google_id" not in session, session)
+#         if "google_id" not in session:
+#             return redirect('/insert_doc/login')  # Authorization required
+#         else:
+#             return function(*args, **kwargs)
+#     return wrapper1
+
+# # Define the route without the decorator for now
+
+
+# @insert_doc.route('/insert_doc/update_doc', methods=['GET', 'POST'])
+# def update_doc():
+#     return "Hello, world!"
+
+# # If you don't encounter any errors with the route defined above,
+# # you can now apply the decorator to it as follows:
+
+
+# @insert_doc.route('/insert_doc/update_doc_with_login', methods=['GET', 'POST'])
+# @login_is_required_2
+# def update_doc_with_login():
+#     return "Hello, world! (with login required)"
+
+@insert_doc.route("/get_docs", methods=['GET'])
+def get_docs():
+    try:
+        args = request.args
+        search_query = args.get('search_query')
+        return jsonify(doc_record.get_docs(search_query))
     except Exception as e:
         return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
 
 
 @insert_doc.route("/test", methods=['GET', 'POST'])
-def protected_area():
+def test():
     try:
-        return render_template('insert_document_page.html', result=None, user_name="unknown")
+        return render_template('update_document_page.html', result=None, user_name="unknown")
     except Exception as e:
         return f"<h1>Error occurred</h1> {str(e)}. Try to login again"

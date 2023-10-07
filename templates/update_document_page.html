@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Insert document</title>
+    <link rel="stylesheet" href="/static/main.css" />
+    <link rel="stylesheet" href="/static/insert_doc.css" />
+  </head>
+  <body>
+    <div class="loading" id="loader">Loading&#8230;</div>
+    <div class="navbar-no-shadow">
+      <div
+        af-el="navbar"
+        data-animation="default"
+        data-collapse="medium"
+        data-duration="400"
+        data-easing="ease"
+        data-easing2="ease"
+        role="banner"
+        class="navbar-no-shadow-container w-nav"
+      >
+        <div class="navbar-wrapper">
+          <img
+            src="/static/download.png"
+            loading="lazy"
+            width="80"
+            af-el="nav-img"
+            alt=""
+          />
+          <div af-el="nav-title" class="text-block">Document Search</div>
+          <div style="float: right; margin-left: auto">
+            <span style="color: white; font-size: 20px">{{ user_name }}</span>
+            <script>
+              function deleteCookies() {
+                var allCookies = document.cookie.split(";");
+
+                // The "expire" attribute of every cookie is
+                // Set to "Thu, 01 Jan 1970 00:00:00 GMT"
+                for (var i = 0; i < allCookies.length; i++)
+                  document.cookie =
+                    allCookies[i] + "=;expires=" + new Date(0).toUTCString();
+              }
+
+              function logout() {
+                deleteCookies();
+                window.location.href = "/insert_doc/logout";
+              }
+            </script>
+            <button class="insert-doc-button" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-container">
+      <button id="postButton">Update selected documents</button>
+      <button id="deleteButton">Delete selected documents</button>
+      <div id="result-pane"></div>
+      <script>
+        function generateTable(data) {
+          let table = "<table>";
+          table +=
+            "<tr><th></th><th>Document</th><th>Accessibility</th><th>Inserted By</th><th>Type</th></tr>";
+
+          for (const item of data) {
+            table += `<tr>`;
+            table += `<td><input type="checkbox" name="selected"></td>`;
+            table += `<td><a href="${item.base_url}" target='_blank'>${item.page_title}</a></td>`;
+            table += `<td>${item.accessibility}</td>`;
+            table += `<td>${item.inserted_by}</td>`;
+            table += `<td>${item.type}</td>`;
+            table += `</tr>`;
+          }
+
+          table += "</table>";
+          return table;
+        }
+
+        async function load_docs() {
+          const response = await fetch("/insert_doc/get_docs");
+
+          if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+          }
+
+          const data = await response.json();
+          console.log(data);
+          let resultPane = document.getElementById("result-pane");
+          resultPane.innerHTML += generateTable(data);
+          document.getElementById("loader").style.visibility = "hidden";
+        }
+        document.getElementById("loader").style.visibility = "visible";
+        load_docs();
+      </script>
+
+      <script>
+        document
+          .getElementById("postButton")
+          .addEventListener("click", function () {
+            var selectedURLs = [];
+
+            var checkboxes = document.querySelectorAll(
+              'input[type="checkbox"]'
+            );
+
+            checkboxes.forEach(function (checkbox, index) {
+              if (checkbox.checked) {
+                var row = checkbox.closest("tr");
+                var documentCell = row.cells[1];
+                var typeCell = row.cells[4];
+                var documentURL = documentCell
+                  .querySelector("a")
+                  .getAttribute("href");
+                var documentType = typeCell.textContent;
+                selectedURLs.push({ url: documentURL, type: documentType });
+              }
+            });
+            if (selectedURLs.length > 0) {
+              console.log(selectedURLs);
+            } else {
+              alert("No records selected.");
+              return;
+            }
+            var postData = selectedURLs;
+            document.getElementById("loader").style.visibility = "visible";
+            fetch("/insert_doc/protected_area/update", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(postData),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                document.getElementById("loader").style.visibility = "hidden";
+                alert("Documents updated successfully.");
+              })
+              .catch((error) => {
+                alert("Error:", error);
+              });
+          });
+      </script>
+    </div>
+  </body>
+</html>

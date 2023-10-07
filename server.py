@@ -1,8 +1,9 @@
 from flask import Flask
 from blueprints.insert_doc import insert_doc
 from blueprints.search_doc import search_doc
+# from blueprints.update_doc import update_doc
 import uuid
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
@@ -24,4 +25,5 @@ def not_found_error(error):
 if __name__ == '__main__':
     app.register_blueprint(insert_doc)
     app.register_blueprint(search_doc)
+    # app.register_blueprint(update_doc)
     app.run(debug=True)
