@@ -97,12 +97,14 @@ input[type="450mst"]:active {
   height: 20px;
 }
 
+
+
 .doctype-label {
   margin: 5px;
   padding: 5px;
   background-color: #c2c1bf00;
   color: white;
-  font-size: 17px;
+  font-size: 15px;
   border-radius: 5px;
 }
 
@@ -135,6 +137,10 @@ td {
 
 tr:nth-child(even) {
   background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #c3c2c2;
 }
 
 th {
@@ -280,4 +286,66 @@ input[type="checkbox"] {
   margin: 0 auto;
   width: 20px;
   height: 20px;
+}
+
+.page_title_search_form {
+  display: inline;
+
+}
+
+.page_search {
+  width: 10%;
+}
+
+button {
+  background-color: #02bda1;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  color: white;
+}
+
+button:hover {
+  background-color: #017e6b;
+}
+
+button:active {
+  background-color: #01574a;
+}
+
+.delete {
+  background-color: rgb(209, 0, 0);
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  color: white;
+}
+
+.delete:hover {
+  background-color: rgb(163, 0, 0);
+}
+
+.delete:active {
+  background-color: rgb(118, 1, 1);
+}
+
+.accessibility-label {
+  margin: 5px;
+  padding: 5px;
+  background-color: #c2c1bf00;
+  color: white;
+  font-size: 15px;
+  border-radius: 5px;
+}
+
+.accessibility-label.public {
+  background-color: #79dc41;
+}
+
+.accessibility-label.private {
+  background-color: #ff3140;
 }

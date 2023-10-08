@@ -32,9 +32,6 @@
             <script>
               function deleteCookies() {
                 var allCookies = document.cookie.split(";");
-
-                // The "expire" attribute of every cookie is
-                // Set to "Thu, 01 Jan 1970 00:00:00 GMT"
                 for (var i = 0; i < allCookies.length; i++)
                   document.cookie =
                     allCookies[i] + "=;expires=" + new Date(0).toUTCString();
@@ -52,8 +49,19 @@
     </div>
 
     <div class="form-container">
+      <form class="page_title_search_form" id="myForm">
+        <input
+          type="text"
+          placeholder="Search with page title..."
+          id="search_query"
+        />
+        <button type="submit" class="page_search">Search</button>
+        <button type="button" id="reload">&#x21bb;</button>
+      </form>
       <button id="postButton">Update selected documents</button>
-      <button id="deleteButton">Delete selected documents</button>
+      <button id="deleteButton" class="delete">
+        Delete selected documents
+      </button>
       <div id="result-pane"></div>
       <script>
         function generateTable(data) {
@@ -65,9 +73,9 @@
             table += `<tr>`;
             table += `<td><input type="checkbox" name="selected"></td>`;
             table += `<td><a href="${item.base_url}" target='_blank'>${item.page_title}</a></td>`;
-            table += `<td>${item.accessibility}</td>`;
+            table += `<td><span class="accessibility-label ${item.accessibility}">${item.accessibility}</span></td>`;
             table += `<td>${item.inserted_by}</td>`;
-            table += `<td>${item.type}</td>`;
+            table += `<td><span class="doctype-label ${item.type}">${item.type}</span></td>`;
             table += `</tr>`;
           }
 
@@ -75,8 +83,11 @@
           return table;
         }
 
-        async function load_docs() {
-          const response = await fetch("/insert_doc/get_docs");
+        async function load_docs(text) {
+          document.getElementById("loader").style.visibility = "visible";
+          url = `/insert_doc/get_docs?search_query=${text}`;
+          console.log(url);
+          const response = await fetch(url);
 
           if (!response.ok) {
             const message = `An error has occured: ${response.status}`;
@@ -85,12 +96,15 @@
 
           const data = await response.json();
           console.log(data);
+          let num = data.length;
           let resultPane = document.getElementById("result-pane");
+          resultPane.innerHTML = `<span>${num} ${
+            num == 1 ? "document" : "documents"
+          }<span>`;
           resultPane.innerHTML += generateTable(data);
           document.getElementById("loader").style.visibility = "hidden";
         }
-        document.getElementById("loader").style.visibility = "visible";
-        load_docs();
+        load_docs("");
       </script>
 
       <script>
@@ -138,6 +152,27 @@
               .catch((error) => {
                 alert("Error:", error);
               });
+          });
+
+        var form = document.getElementById("myForm");
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          var text = document.getElementById("search_query").value;
+          text = text.trim();
+          if (text === "") {
+            alert("Please fill out all fields.");
+          } else {
+            load_docs(text);
+          }
+        });
+
+        document
+          .getElementById("reload")
+          .addEventListener("click", function (event) {
+            event.preventDefault();
+            load_docs("");
           });
       </script>
     </div>

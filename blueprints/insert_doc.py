@@ -200,6 +200,7 @@ def get_docs():
     try:
         args = request.args
         search_query = args.get('search_query')
+        print(search_query)
         return jsonify(doc_record.get_docs(search_query))
     except Exception as e:
         return f"<h1>Error occurred</h1> {str(e)}. Try to login again"

@@ -2736,13 +2736,15 @@ textarea.w-select {
 .insert-doc-button {
     font-size: 18px;
     padding: 10px;
-    color: #00c9a8;
+    color: white;
 }
 
 .insert-doc-button:hover {
     background-color: #e4e4e4;
+    color: #00c9a8;
 }
 
 .insert-doc-button:active {
     background-color: #c8c7c7;
+    color: #00c9a8;
 }

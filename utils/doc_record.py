@@ -18,7 +18,7 @@ class DocumentRecord:
 
         self.collection_name = collection_name
 
-        self.create_index()
+        # self.create_index()
 
         print("Connected to Qdrant : ", self.qdrant_client.count(
             collection_name=collection_name))
@@ -85,11 +85,24 @@ class DocumentRecord:
     def get_docs(self, search_query):
         # make logic for search query
         try:
+            search_query = "" if search_query == None else search_query
+            filter = models.Filter(
+                must=[models.FieldCondition(
+                    key="page_title",
+                    match=models.MatchText(text=search_query.strip())
+                )]
+            ) if search_query.strip() else None
+
+            print(filter)
+
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=[0],
                 with_vectors=True,
                 with_payload=True,
+                # score_threshold=10,
+                limit=10 if search_query.strip() else 500,
+                query_filter=filter
             )
             search_results = []
             for hit in hits:
