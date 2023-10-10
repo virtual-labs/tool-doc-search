@@ -23,7 +23,7 @@ class DocumentSearch:
 
         # self.reset_database()
 
-        print("Connected to Qdrant : ", self.qdrant_client.count(
+        print(f"Connected to Qdrant : {collection_name}", self.qdrant_client.count(
             collection_name=collection_name))
         print("Document Search Initialized...")
 
@@ -87,10 +87,10 @@ class DocumentSearch:
 
     def insert_doc_batch(self, docs, credentials, user="unknown"):
         try:
-
+            print("Getting document chunks for batch request from user :", user)
             data, base_urls = get_chunks_batch(docs, credentials, user)
-            print("got chunks")
             if len(data):
+                print("Deleting docs")
                 self.qdrant_client.delete(
                     collection_name=f"{self.collection_name}",
                     points_selector=models.FilterSelector(
@@ -108,6 +108,7 @@ class DocumentSearch:
                 payloads = []
                 vectors = []
                 ids = []
+                print("Encoding docs")
                 for chunk in data:
                     # print(chunk)
                     ids.append(uuid.uuid4().int >> 64)
@@ -115,6 +116,7 @@ class DocumentSearch:
                         chunk["content"]).tolist())
                     payloads.append(chunk["payload"])
                 print("Encoded docs")
+                print("Upserting docs")
                 self.qdrant_client.upsert(
                     collection_name=f"{self.collection_name}",
                     points=models.Batch(
@@ -123,7 +125,7 @@ class DocumentSearch:
                         vectors=vectors
                     ),
                 )
-                print("Inserted docs")
+                print("Upserted docs")
 
                 records = []
                 results = []
@@ -159,7 +161,6 @@ class DocumentSearch:
                             "type": data[i]["payload"]["type"]
                         })
 
-                print("records passed", json.dumps(records, indent=4))
                 self.doc_record.insert_entry(records)
                 resultObj = {
                     "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results}
@@ -168,6 +169,40 @@ class DocumentSearch:
                 return resultObj
             else:
                 raise Exception("Document(s) have no headings.")
+        except Exception as e:
+            raise e
+
+    def delete_doc(self, urls, user="unknown"):
+        # print("indelete_doc")
+        # return jsonify({})
+        try:
+            print(
+                f"Deleting documents {json.dumps(urls, indent=4)} request from user :", user)
+            if len(urls):
+                print("Deleting document chunks")
+                self.qdrant_client.delete(
+                    collection_name=f"{self.collection_name}",
+                    points_selector=models.FilterSelector(
+                        filter=models.Filter(
+                            should=[
+                                models.FieldCondition(
+                                    key="base_url",
+                                    match=models.MatchValue(value=base_url),
+                                ) for base_url in urls
+                            ]
+                        )
+                    ),
+                )
+                print("Documents deleted")
+                print("Deleting records")
+                self.doc_record.delete_entry(urls)
+                print("Records deleted")
+                resultObj = {
+                    "message": f"Document{'s' if len(urls) > 1 else ''} deleted successfully", "result": urls}
+                print(json.dumps(resultObj, indent=4))
+                return resultObj
+            else:
+                raise Exception("No valid document.")
         except Exception as e:
             raise e
 

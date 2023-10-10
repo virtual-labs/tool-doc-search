@@ -119,19 +119,34 @@ def protected_area():
         print("Getting ", request.method)
         if request.method == 'POST':
             req = request.json
+
             if "action" not in req:
                 raise BadRequestException("Please provide action")
+
             if (req["action"] == "upsert"):
                 if "data" not in req:
                     raise BadRequestException("Please provide data")
                 result = insert_document_batch(
                     docs=req["data"], credentials=credentials, name=session["name"], doc_search=doc_search)
                 return jsonify(result)
-            print("getting a post")
+
+            elif (req["action"] == "delete"):
+                if "data" not in req:
+                    raise BadRequestException("Please provide data")
+                print("in delete")
+                print(req["data"])
+                result = doc_search.delete_doc(
+                    urls=req["data"],  user=session["name"])
+                print("got it")
+                return jsonify(result)
+
+            else:
+                return jsonify({"message": "Invalid action"})
+
         return render_template('update_document_page.html', result=result, user_name=session["name"])
 
     except Exception as e:
-        return f"<h1>Error occurred</h1> {str(e)}."
+        return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
 
 
 @insert_doc.route("/get_docs", methods=['GET'])
@@ -142,7 +157,7 @@ def get_docs():
         print(search_query)
         return jsonify(doc_record.get_docs(search_query))
     except Exception as e:
-        return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
+        return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
 
 
 @insert_doc.route("/test", methods=['GET', 'POST'])

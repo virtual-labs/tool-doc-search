@@ -20,11 +20,12 @@ class DocumentRecord:
 
         # self.create_index()
 
-        print("Connected to Qdrant : ", self.qdrant_client.count(
+        print(f"Connected to Qdrant : {collection_name}", self.qdrant_client.count(
             collection_name=collection_name))
         print("Document Record Initialized...")
 
     def insert_entry(self, docs):
+        print("Upserting entries in Record DB")
         try:
             if len(docs):
                 self.qdrant_client.delete(
@@ -41,7 +42,9 @@ class DocumentRecord:
                         )
                     ),
                 )
-                print("records got", json.dumps(docs, indent=4))
+                print("Records")
+                print(json.dumps(
+                    [doc["base_url"] for doc in docs], indent=4))
                 print("Deleted records")
                 payloads = []
                 vectors = []
@@ -58,8 +61,35 @@ class DocumentRecord:
                         vectors=vectors
                     ),
                 )
-                print(json.dumps(payloads, indent=4))
-                print("Inserted record")
+                print("Inserted new record")
+                return "success"
+            else:
+                raise Exception("No valid document.")
+        except Exception as e:
+            raise e
+
+    def delete_entry(self, docs):
+        print("Deleting entries in Record DB")
+        try:
+            if len(docs):
+                self.qdrant_client.delete(
+                    collection_name=f"{self.collection_name}",
+                    points_selector=models.FilterSelector(
+                        filter=models.Filter(
+                            should=[
+                                models.FieldCondition(
+                                    key="base_url",
+                                    match=models.MatchValue(
+                                        value=doc),
+                                ) for doc in docs
+                            ]
+                        )
+                    ),
+                )
+                print("Records")
+                print(json.dumps(
+                    docs, indent=4))
+                print("Deleted records")
                 return "success"
             else:
                 raise Exception("No valid document.")
@@ -83,7 +113,7 @@ class DocumentRecord:
         ])
 
     def get_docs(self, search_query):
-        # make logic for search query
+        print("Searching Record DB for search_query=", search_query)
         try:
             search_query = "" if search_query == None else search_query
             filter = models.Filter(
@@ -92,8 +122,6 @@ class DocumentRecord:
                     match=models.MatchText(text=search_query.strip())
                 )]
             ) if search_query.strip() else None
-
-            print(filter)
 
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
@@ -112,6 +140,8 @@ class DocumentRecord:
                     "page_title": hit.payload["page_title"],
                     "inserted_by": hit.payload["inserted_by"],
                 })
+            print(f"Returning results for {search_query} : ", len(
+                search_results))
             return search_results
         except Exception as e:
             raise CustomException(str(e), 500)

@@ -104,3 +104,49 @@ document
     event.preventDefault();
     document.getElementById("id01").style.display = "block";
   });
+
+document.getElementById("deleteButton").addEventListener("click", function () {
+  let text = "Are you sure to delete selected document(s)?";
+  if (confirm(text) == false) {
+    return;
+  }
+
+  var selectedURLs = [];
+
+  var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+  checkboxes.forEach(function (checkbox, index) {
+    if (checkbox.checked) {
+      var row = checkbox.closest("tr");
+      var documentCell = row.cells[1];
+      var documentURL = documentCell.querySelector("a").getAttribute("href");
+      selectedURLs.push(documentURL);
+    }
+  });
+
+  if (selectedURLs.length > 0) {
+    console.log(selectedURLs);
+  } else {
+    alert("No records selected.");
+    return;
+  }
+  var postData = selectedURLs;
+  document.getElementById("loader").style.visibility = "visible";
+  fetch("/insert_doc/protected_area", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: "delete", data: postData }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      document.getElementById("loader").style.visibility = "hidden";
+      load_docs("");
+    })
+    .catch((error) => {
+      console.log(error);
+      alert("Error:", error);
+    });
+});
