@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 from error.CustomException import NotFoundException, BadRequestException
 import json
 from googleapiclient.discovery import build
+import logging
+
+log = logging.getLogger("document_parser")
+log.setLevel(logging.INFO)
 
 
 class DocumentChunk:
@@ -148,8 +152,10 @@ def parse_page_markdown(page_md):
 ###############################################################################################
 
 
-def parse_markdown_from_github(github_url):
+def fetch_markdown_from_github(github_url):
     response = requests.get(github_url)
+    if response.status_code == 404:
+        raise NotFoundException("Document not found. Invalid document link")
     markdown_content = response.text
     return markdown_content
 
@@ -157,6 +163,9 @@ def parse_markdown_from_github(github_url):
 def fetch_google_doc(doc_id):
     url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
     response = requests.get(url)
+    if response.status_code == 404:
+        raise NotFoundException("Document not found. Invalid document link")
+    log.info(f"Fetching markdown from google doc with id {doc_id}")
     return convert_to_markdown(response.content)
 
 
@@ -164,10 +173,9 @@ def fetch_google_doc_private(doc_id, credentials):
     url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
     response = requests.get(url)
     service = build('drive', 'v3', credentials=credentials)
-    # doc_id = '1MQATKjor7Z_qpgChRwJw4BcRk22scFpCyMqN5FeqNn8'
     request = service.files().export(fileId=doc_id, mimeType='text/html')
     response = request.execute()
-    # print("html content", )
+    log.info(f"Fetching markdown from google doc with id {doc_id}")
     return convert_to_markdown(response.decode('utf-8'))
 
 
@@ -288,10 +296,11 @@ def generate_document_chunks(sections, base_url, page_title, type):
 
 
 def get_chunks_from_markdown(markdown_content, url, type, user):
+    log.info("Extracting headings from markdown")
     markdown_content = parse_page_markdown(markdown_content)
     page_title = extract_first_heading(markdown_content, type)
     sections = extract_sections(markdown_content)
-
+    log.info("Generating chunks from markdown")
     chunks = generate_document_chunks(sections, url, page_title, type)
     data = []
     for chunk in chunks:
@@ -308,7 +317,9 @@ def get_chunks_from_github(url, user):
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
-    markdown_content = parse_markdown_from_github(github_raw_url)
+    log.info(f"Fetching markdown from {github_raw_url}")
+    markdown_content = fetch_markdown_from_github(github_raw_url)
+    log.info(f"Markdown fetched from {github_raw_url}")
     data = get_chunks_from_markdown(markdown_content, url, "md", user)
     newdata = []
     for chunk in data:
@@ -332,15 +343,20 @@ def get_chunks_from_gdoc(url, credentials, user):
     if url.endswith("/"):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    log.info(f"Getting accessiblility of {url} ")
     accessibility = get_gdoc_accessiblility(url)
+    log.info(f"Accessiblility of {url} is {accessibility}")
     if match:
         doc_id = match.group(1)
         markdown_content = ""
+        log.info(f"Fetching google doc {url}")
         if accessibility == "public":
             markdown_content = fetch_google_doc(doc_id)
         elif accessibility == "private":
             markdown_content = fetch_google_doc_private(doc_id, credentials)
+        log.info(f"Markdown fetched from google doc {url}")
         data = get_chunks_from_markdown(markdown_content, url, "gdoc", user)
+
         newdata = []
         for d in data:
             newpayload = d["payload"]
@@ -366,27 +382,32 @@ def get_chunks(doc, credentials, user):
         return chunks
     except Exception as e:
         raise e
-    
+
+
 def get_chunks_batch(docs, credentials, user):
+    log.info("Getting batch")
     try:
         chunks = []
         base_urls = []
         for idx, doc in enumerate(docs):
             try:
+                log.info(
+                    f"Getting chunks from document {idx+1} with url {doc['url']}")
                 chunk = []
                 if doc["type"] == "md":
+                    log.info("Getting chunks from github")
                     chunk = get_chunks_from_github(doc["url"], user)
                 elif doc["type"] == "gdoc":
+                    log.info("Getting chunks from google doc")
                     chunk = get_chunks_from_gdoc(doc["url"], credentials, user)
                 for ch in chunk:
                     chunks.append(ch)
-                # chunks.append(chunk)
                 base_urls.append(doc["url"])
             except Exception as e:
-                raise Exception(f"Error occurred while parsing document {idx+1}, {str(e)}")
-        # print(len(chunks))
-        # print(json.dumps(base_urls, indent=4))
-        # print(json.dumps(chunks, indent=4))
+                raise Exception(
+                    f"Error occurred while parsing document {idx+1}, {str(e)}")
+        log.info(f"Total document chunks generated {len(chunks)}")
+        logging.basicConfig(level=logging.WARNING)
         return chunks, base_urls
     except Exception as e:
         raise e

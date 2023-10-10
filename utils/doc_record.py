@@ -100,7 +100,6 @@ class DocumentRecord:
                 query_vector=[0],
                 with_vectors=True,
                 with_payload=True,
-                # score_threshold=10,
                 limit=10 if search_query.strip() else 500,
                 query_filter=filter
             )

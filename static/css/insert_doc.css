@@ -1,7 +1,7 @@
 /* google app engine for flask */
 
 body {
-  background-image: url('/static/Background2.png');
+  background-image: url('/static/img/Background2.png');
   /* Replace 'your-image.jpg' with the path to your image */
   background-size: cover;
   background-repeat: no-repeat;
@@ -30,7 +30,7 @@ body {
   -webkit-transform: translate(-50%, 0%);
 }
 
-#result-pane {
+#result-pane-insert {
   margin-top: 10px;
   background-color: #d8d7d7;
   padding: 10px;
@@ -78,11 +78,11 @@ input[type="submit"] {
   font-size: 20px;
 }
 
-input[type="450mst"]:hover {
+input[type="submit"]:hover {
   background-color: #80b84f;
 }
 
-input[type="450mst"]:active {
+input[type="submit"]:active {
   background-color: #66933f;
 }
 
@@ -139,6 +139,10 @@ tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
+tr:nth-child(odd) {
+  background-color: #cfcfcf;
+}
+
 tr:hover {
   background-color: #c3c2c2;
 }
@@ -154,7 +158,7 @@ th {
 /* Absolute Center Spinner */
 .loading {
   position: fixed;
-  z-index: 999;
+  z-index: 9999;
   height: 2em;
   width: 2em;
   overflow: show;
@@ -348,4 +352,72 @@ button:active {
 
 .accessibility-label.private {
   background-color: #ff3140;
+}
+
+.modal {
+  display: none;
+  /* Hidden by default */
+  position: fixed;
+  /* Stay in place */
+  z-index: 1;
+  /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  /* Full width */
+  height: 100%;
+  /* Full height */
+  overflow: auto;
+  /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0);
+  /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Black w/ opacity */
+  padding-top: 60px;
+}
+
+.modal-content {
+  background-color: #c2c1bf;
+  color: #545454;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 5% auto 15% auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 60%;
+}
+
+.animate {
+  -webkit-animation: animatezoom 0.3s;
+  animation: animatezoom 0.3s;
+}
+
+@-webkit-keyframes animatezoom {
+  from {
+    -webkit-transform: scale(0);
+  }
+
+  to {
+    -webkit-transform: scale(1);
+  }
+}
+
+@keyframes animatezoom {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@media screen and (max-width: 300px) {
+  span.psw {
+    display: block;
+    float: none;
+  }
+
+  .cancelbtn {
+    width: 100%;
+  }
 }

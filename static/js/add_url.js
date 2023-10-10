@@ -24,8 +24,9 @@ function generate_url_div(i) {
   urlInput.type = "text";
   urlInput.name = "url_" + i;
   urlInput.placeholder = "Enter URL";
-//   urlInput.required = true;
- // <input type="hidden" id="custId" name="custId" value="3487">
+  urlInput.id = "doc-url-input_" + i;
+  //   urlInput.required = true;
+  // <input type="hidden" id="custId" name="custId" value="3487">
   var tagLabel = document.createElement("span");
   tagLabel.textContent = "";
   tagLabel.className = `doctype-label`;
@@ -39,21 +40,20 @@ function generate_url_div(i) {
   urlInput.addEventListener("keyup", function (evt) {
     let url = evt.target.value;
     if (validate_gdoc(url)) {
-        hiddenLabel.value = "gdoc";
-        tagLabel.textContent = "gdoc";
-        tagLabel.className = `doctype-label gdoc`;
+      hiddenLabel.value = "gdoc";
+      tagLabel.textContent = "gdoc";
+      tagLabel.className = `doctype-label gdoc`;
     } else if (validate_md(url)) {
-        hiddenLabel.value = "md";
-        tagLabel.textContent = "md";
-        tagLabel.className = `doctype-label md`;
+      hiddenLabel.value = "md";
+      tagLabel.textContent = "md";
+      tagLabel.className = `doctype-label md`;
     } else {
-        hiddenLabel.value = "unknown";
-        tagLabel.textContent = "unknown";
-        tagLabel.className = `doctype-label`;
+      hiddenLabel.value = "unknown";
+      tagLabel.textContent = "unknown";
+      tagLabel.className = `doctype-label`;
     }
   });
 
-  
   division.appendChild(indexLabel);
   division.appendChild(urlInput);
   division.appendChild(tagLabel);
@@ -61,7 +61,7 @@ function generate_url_div(i) {
   return division;
 }
 
-document.getElementById("divisionContainer").append(generate_url_div(0))
+document.getElementById("divisionContainer").append(generate_url_div(0));
 
 document
   .getElementById("division_count")
@@ -75,33 +75,3 @@ document
       divisionContainer.appendChild(generate_url_div(i));
     }
   });
-
-
-
-  document.querySelector('form').addEventListener('submit', function (event) {
-    var divisionCount = parseInt(document.getElementById('division_count').value);
-    var isValid = true;
-
-    for (var i = 0; i < divisionCount; i++) {
-        var tagLabel = document.getElementById('tag_' + i );
-        var tagValue = tagLabel.innerHTML.trim();
-        
-        if (tagValue === '') {
-            alert('URL cannot be empty for document ' + (i + 1));
-            isValid = false;
-            break;
-        }
-        else if (tagValue === 'unknown') {
-            alert('unidentified URL type for document ' + (i + 1));
-            isValid = false;
-            break;
-        }
-    }
-
-    if (!isValid) {
-        event.preventDefault();
-    }
-    else{
-        document.getElementById("loader").style.visibility = "visible"
-    }
-});

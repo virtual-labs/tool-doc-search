@@ -162,7 +162,7 @@ class DocumentSearch:
                 print("records passed", json.dumps(records, indent=4))
                 self.doc_record.insert_entry(records)
                 resultObj = {
-                    "message": f"Document{'s' if len(results) > 1 else ''} inserted successfully", "result": results}
+                    "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results}
                 print(json.dumps(resultObj, indent=4))
 
                 return resultObj
