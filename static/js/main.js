@@ -1,7 +1,7 @@
 function generateTable(data) {
   let table = "<table>";
   table +=
-    "<tr><th></th><th>Document</th><th>Accessibility</th><th>Inserted By</th><th>Type</th></tr>";
+    "<tr><th><button style='padding:0; margin:0;background-color:rgba(0,0,0,0); width:100%' id='clearSelection'><img src='/static/img/clear.png' alt='img' style='height:20px; width:20px; margin:0; '/></button></th><th>Document</th><th>Accessibility</th><th>Inserted By</th><th>Type</th></tr>";
 
   for (const item of data) {
     table += `<tr>`;
@@ -17,28 +17,55 @@ function generateTable(data) {
   return table;
 }
 
-async function load_docs(text) {
+let page_object = {
+  search_query: "",
+  page: 1,
+};
+
+async function load_docs(text, page) {
   document.getElementById("loader").style.visibility = "visible";
-  url = `/insert_doc/get_docs?search_query=${text}`;
+  url = `/insert_doc/get_docs?search_query=${text}&page=${page}`;
   console.log(url);
   const response = await fetch(url);
 
   if (!response.ok) {
     const message = `An error has occured: ${response.status}`;
+    document.getElementById("loader").style.visibility = "hidden";
     throw new Error(message);
   }
 
   const data = await response.json();
   console.log(data);
   let num = data.length;
+  let pageText = document.getElementById("page-text");
+  if (num === 0 && page > 1) {
+    alert("No next page.");
+    if (page_object.page > 1) page_object.page -= 1;
+    document.getElementById("loader").style.visibility = "hidden";
+    pageText.innerText = `Page ${page_object.page}`;
+    console.log(`Page ${page_object.page}`);
+    return;
+  }
+  pageText.innerText = `Page ${page_object.page}`;
+  console.log(`Page ${page_object.page}`);
   let resultPane = document.getElementById("result-pane");
   resultPane.innerHTML = `<span>${num} ${
     num == 1 ? "document" : "documents"
   }<span>`;
   resultPane.innerHTML += generateTable(data);
+  document
+    .getElementById("clearSelection")
+    .addEventListener("click", function () {
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+      checkboxes.forEach(function (checkbox, index) {
+        checkbox.checked = false;
+      });
+    });
   document.getElementById("loader").style.visibility = "hidden";
 }
-load_docs("");
+load_docs(page_object.search_query, page_object.page);
+
 document.getElementById("postButton").addEventListener("click", function () {
   var selectedURLs = [];
 
@@ -71,11 +98,13 @@ document.getElementById("postButton").addEventListener("click", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      document.getElementById("loader").style.visibility = "hidden";
       alert("Documents updated successfully.");
     })
     .catch((error) => {
       alert("Error:", error);
+    })
+    .finally(() => {
+      document.getElementById("loader").style.visibility = "hidden";
     });
 });
 
@@ -89,13 +118,19 @@ form.addEventListener("submit", function (event) {
   if (text === "") {
     alert("Please fill out all fields.");
   } else {
-    load_docs(text);
+    if (page_object.search_query !== text) {
+      page_object.search_query = text;
+      page_object.page = 1;
+    }
+    load_docs(page_object.search_query, page_object.page);
   }
 });
 
 document.getElementById("reload").addEventListener("click", function (event) {
   event.preventDefault();
-  load_docs("");
+  page_object.page = 1;
+  page_object.search_query = "";
+  load_docs(page_object.search_query, page_object.page);
 });
 
 document
@@ -107,9 +142,6 @@ document
 
 document.getElementById("deleteButton").addEventListener("click", function () {
   let text = "Are you sure to delete selected document(s)?";
-  if (confirm(text) == false) {
-    return;
-  }
 
   var selectedURLs = [];
 
@@ -130,6 +162,9 @@ document.getElementById("deleteButton").addEventListener("click", function () {
     alert("No records selected.");
     return;
   }
+  if (confirm(text) == false) {
+    return;
+  }
   var postData = selectedURLs;
   document.getElementById("loader").style.visibility = "visible";
   fetch("/insert_doc/protected_area", {
@@ -142,11 +177,27 @@ document.getElementById("deleteButton").addEventListener("click", function () {
     .then((response) => response.json())
     .then((data) => {
       console.log(data);
-      document.getElementById("loader").style.visibility = "hidden";
-      load_docs("");
+      load_docs(page_object.search_query, 1);
     })
     .catch((error) => {
       console.log(error);
       alert("Error:", error);
+    })
+    .finally(() => {
+      document.getElementById("loader").style.visibility = "hidden";
     });
+});
+
+document.getElementById("prev-button").addEventListener("click", function () {
+  if (page_object.page > 1) {
+    page_object.page -= 1;
+    load_docs(page_object.search_query, page_object.page);
+  } else {
+    alert("No previous page.");
+  }
+});
+
+document.getElementById("next-button").addEventListener("click", function () {
+  page_object.page += 1;
+  load_docs(page_object.search_query, page_object.page);
 });

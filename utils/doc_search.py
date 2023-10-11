@@ -34,7 +34,7 @@ class DocumentSearch:
             collection_name=f"{self.collection_name}",
             vectors_config=models.VectorParams(
                 size=self.encoder.get_sentence_embedding_dimension(),
-                distance=models.Distance.DOT
+                distance=models.Distance.COSINE
             )
         )
         self.create_index()
@@ -85,6 +85,28 @@ class DocumentSearch:
         except Exception as e:
             raise e
 
+    def batched(self, arr, batch_size):
+        batches = [arr[i:i + batch_size]
+                   for i in range(0, len(arr), batch_size)]
+        return batches
+
+    def upsert_batchs(self, ids, payloads, vectors):
+        batch_size = 40
+        ids = self.batched(ids, batch_size)
+        payloads = self.batched(payloads, batch_size)
+        vectors = self.batched(vectors, batch_size)
+        for i in range(len(ids)):
+            print("Upserting batch", i+1)
+            self.qdrant_client.upsert(
+                collection_name=f"{self.collection_name}",
+                points=models.Batch(
+                    ids=ids[i],
+                    payloads=payloads[i],
+                    vectors=vectors[i]
+                ),
+            )
+            print("Upserted batch", i+1)
+
     def insert_doc_batch(self, docs, credentials, user="unknown"):
         try:
             print("Getting document chunks for batch request from user :", user)
@@ -117,14 +139,7 @@ class DocumentSearch:
                     payloads.append(chunk["payload"])
                 print("Encoded docs")
                 print("Upserting docs")
-                self.qdrant_client.upsert(
-                    collection_name=f"{self.collection_name}",
-                    points=models.Batch(
-                        ids=ids,
-                        payloads=payloads,
-                        vectors=vectors
-                    ),
-                )
+                self.upsert_batchs(ids, payloads, vectors)
                 print("Upserted docs")
 
                 records = []

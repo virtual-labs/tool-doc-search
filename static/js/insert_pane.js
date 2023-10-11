@@ -16,6 +16,7 @@ document.getElementById("insert-button").addEventListener("click", function () {
   event.preventDefault();
   var selectedURLs = [];
   var divisionCount = parseInt(document.getElementById("division_count").value);
+  let urlMap = {};
   for (var i = 0; i < divisionCount; i++) {
     var tagLabel = document.getElementById("tag_" + i);
     var urlVal = document.getElementById("doc-url-input_" + i);
@@ -29,12 +30,18 @@ document.getElementById("insert-button").addEventListener("click", function () {
       alert("unidentified URL type for document " + (i + 1));
       return;
     } else {
+      if (urlMap.hasOwnProperty(urlVal.value.trim())) {
+        alert("Duplicate URL found for document " + (i + 1));
+        return;
+      }
+      urlMap[urlVal.value.trim()] = 1;
       selectedURLs.push({
         url: urlVal.value,
         type: tagValue,
       });
     }
   }
+
   document.getElementById("loader").style.visibility = "visible";
   if (selectedURLs.length > 0) {
     console.log(selectedURLs);

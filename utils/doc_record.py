@@ -6,6 +6,7 @@ import uuid
 from error.CustomException import CustomException
 from flask import jsonify
 import json
+import random
 
 
 class DocumentRecord:
@@ -18,7 +19,7 @@ class DocumentRecord:
 
         self.collection_name = collection_name
 
-        # self.create_index()
+        # self.reset_database()
 
         print(f"Connected to Qdrant : {collection_name}", self.qdrant_client.count(
             collection_name=collection_name))
@@ -51,7 +52,8 @@ class DocumentRecord:
                 ids = []
                 for chunk in docs:
                     ids.append(uuid.uuid4().int >> 64)
-                    vectors.append([0.0])
+                    vectors.append(
+                        [random.random() for i in range(4)])
                     payloads.append(chunk)
                 self.qdrant_client.upsert(
                     collection_name=f"{self.collection_name}",
@@ -112,9 +114,14 @@ class DocumentRecord:
             },
         ])
 
-    def get_docs(self, search_query):
-        print("Searching Record DB for search_query=", search_query)
+    def get_docs(self, search_query, page):
+        print("Searching Record DB for search_query=",
+              search_query, "page=", page)
+
+        page_size = 5
+
         try:
+            page = int(page)
             search_query = "" if search_query == None else search_query
             filter = models.Filter(
                 must=[models.FieldCondition(
@@ -122,13 +129,15 @@ class DocumentRecord:
                     match=models.MatchText(text=search_query.strip())
                 )]
             ) if search_query.strip() else None
-
+            # print(3, (page-1)*3)
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
-                query_vector=[0],
+                query_vector=[0.5, 0.5, 0.5, 0.5],
                 with_vectors=True,
                 with_payload=True,
-                limit=10 if search_query.strip() else 500,
+                limit=page_size,
+                offset=(page-1)*page_size,
+                score_threshold=0.0,
                 query_filter=filter
             )
             search_results = []
@@ -152,8 +161,8 @@ class DocumentRecord:
         self.qdrant_client.recreate_collection(
             collection_name=f"{self.collection_name}",
             vectors_config=models.VectorParams(
-                size=1,
-                distance=models.Distance.DOT
+                size=4,
+                distance=models.Distance.COSINE
             )
         )
         self.create_index()

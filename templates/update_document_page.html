@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Insert document</title>
+    <title>Document Search</title>
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/static/img/favicon.ico"
+    />
     <link rel="stylesheet" href="/static/css/main.css" />
     <link rel="stylesheet" href="/static/css/insert_doc.css" />
     <style></style>
@@ -10,7 +16,7 @@
     <div class="loading" id="loader">Loading&#8230;</div>
     <div id="id01" class="modal">
       <div class="modal-content animate">
-        <h2>Insert Document</h2>
+        <h2>Upsert Document(s)</h2>
         <form>
           <label for="division_count"
             >Select Document Count
@@ -66,13 +72,32 @@
         />
         <button type="submit" class="page_search">Search</button>
         <button type="button" id="reload">&#x21bb;</button>
-        <button id="modal-button" style="float: right">Insert documents</button>
+        <button id="modal-button" style="float: right">
+          Upsert documents with URL
+        </button>
       </form>
       <button id="postButton">Update selected documents</button>
       <button id="deleteButton" class="delete">
         Delete selected documents
       </button>
       <div id="result-pane"></div>
+      <center>
+        <button
+          class="bottom-button"
+          id="prev-button"
+          style="margin-bottom: 5px"
+        >
+          <
+        </button>
+        <button
+          class="bottom-button"
+          id="next-button"
+          style="margin-bottom: 5px"
+        >
+          >
+        </button>
+        <p id="page-text" style="font-size: 16px"></p>
+      </center>
       <script src="/static/js/main.js"></script>
     </div>
   </body>

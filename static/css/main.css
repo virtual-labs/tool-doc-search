@@ -2737,6 +2737,7 @@ textarea.w-select {
     font-size: 18px;
     padding: 10px;
     color: white;
+    background-color: #02d7b3;
 }
 
 .insert-doc-button:hover {

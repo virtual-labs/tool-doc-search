@@ -13,12 +13,11 @@ body {
   background-color: #c2c1bfd9;
   color: #545454;
   padding: 20px;
+  padding-bottom: 0;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 60%;
-  /* Adjust the width as needed */
   margin: 0 auto;
-  /* Center the container horizontally */
   margin-top: 10px;
 
   position: absolute;
@@ -420,4 +419,10 @@ button:active {
   .cancelbtn {
     width: 100%;
   }
+}
+
+.bottom-button {
+  margin-top: 5px;
+
+  padding: 5px;
 }

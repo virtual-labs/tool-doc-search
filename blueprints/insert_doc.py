@@ -154,8 +154,9 @@ def get_docs():
     try:
         args = request.args
         search_query = args.get('search_query')
-        print(search_query)
-        return jsonify(doc_record.get_docs(search_query))
+        page = args.get('page') if args.get('page') else 1
+        print(search_query, page)
+        return jsonify(doc_record.get_docs(search_query, page))
     except Exception as e:
         return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
 
