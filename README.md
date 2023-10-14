@@ -1,5 +1,39 @@
 # Virtual Labs Document Search - Running Documentation
 
+This document serves as a comprehensive guide to the Virtual Labs Document Search Tool, offering insights into its functionality, supported document types, processing procedures, and user interaction. It is designed to provide a clear understanding of the tool's usage for document searchers and managers while explaining the technical aspects.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Problem Statement](#problem-statement)
+- [Supported Document Types](#supported-document-types)
+- [Document Processing](#document-processing-and-indexing)
+- [Search Process](#search-process)
+- [Search Result Filtering](#search-result-filtering)
+- [User Interaction](#user-interaction)
+
+  - [Writing Searchable Documents](#writing-searchable-documents)
+
+  - [Crafting Effective Search Queries](#crafting-effective-search-queries)
+
+- [How the Document Search Tool Works](#how-the-document-search-tool-works)
+
+  - [Latency Numbers](#latency-numbers)
+
+- [Document Insertion into Qdrant Vector Database](#document-insertion-into-qdrant-vector-database)
+
+  - Markdown File
+  - Google Document File
+
+- [Determining Google Document Accessibility](#determining-google-document-accessibility)
+
+  - [Permissions and Scopes](#permissions-and-scopes)
+  - [Process of Accessibility Determination](#process-of-accessibility-determination)
+
+- [Technology Stack](#technology-stack)
+- [Deployment](#deployment)
+- [Future Updates and Features](#future-updates-and-features)
+
 ## Introduction
 
 The Document Search Tool for Virtual Labs is designed to alleviate the challenges associated with navigating vast collections of documents within the virtual labs environment. This tool serves as a powerful solution to efficiently retrieve relevant sections from a plethora of documents, ensuring that users can access the information they need promptly. This document serves as running documentation to help users understand the functionality and usage of the tool.
@@ -142,7 +176,7 @@ For Google Document files (both [public and private](#determining-google-documen
 
 This process ensures that documents, whether in Markdown or Google Docs format, are effectively segmented, encoded, and stored in the Qdrant vector database for efficient and accurate retrieval.
 
-## Determining Google Document Accessibility
+### Determining Google Document Accessibility
 
 The Document Search Tool employs a mechanism to distinguish between public and private Google Documents. This determination is made through a systematic process using the Google credentials of the logged-in user, along with specific permissions and scopes.
 
