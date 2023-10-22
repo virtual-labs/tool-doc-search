@@ -25,24 +25,50 @@ class DocumentRecord:
             collection_name=collection_name))
         print("Document Record Initialized...")
 
-    def insert_entry(self, docs):
+    def insert_entry(self, docs, operation="insert"):
         print("Upserting entries in Record DB")
         try:
             if len(docs):
-                self.qdrant_client.delete(
+                filter = models.Filter(
+                    should=[
+                        models.FieldCondition(
+                            key="base_url",
+                            match=models.MatchValue(
+                                value=doc["base_url"]),
+                        ) for doc in docs
+                    ]
+                )
+
+                print(operation)
+                if operation == "update":
+                    hits = self.qdrant_client.search(
+                        collection_name=self.collection_name,
+                        query_vector=[0.5, 0.5, 0.5, 0.5],
+                        with_vectors=False,
+                        with_payload=["created_by", "created_at", "base_url"],
+                        score_threshold=0.0,
+                        query_filter=filter
+                    )
+                    search_results = []
+                    for hit in hits:
+                        search_results.append({
+                            "created_by": hit.payload["created_by"],
+                            "created_at": hit.payload["created_at"],
+                            "base_url": hit.payload["base_url"]
+                        })
+                    for doc in docs:
+                        for result in search_results:
+                            if doc["base_url"] == result["base_url"]:
+                                doc["created_by"] = result["created_by"]
+                                doc["created_at"] = result["created_at"]
+                                break
+
+                returnval = self.qdrant_client.delete(
                     collection_name=f"{self.collection_name}",
                     points_selector=models.FilterSelector(
-                        filter=models.Filter(
-                            should=[
-                                models.FieldCondition(
-                                    key="base_url",
-                                    match=models.MatchValue(
-                                        value=doc["base_url"]),
-                                ) for doc in docs
-                            ]
-                        )
-                    ),
-                )
+                        filter=filter,
+                    ))
+                print(returnval)
                 print("Records")
                 print(json.dumps(
                     [doc["base_url"] for doc in docs], indent=4))
@@ -68,6 +94,7 @@ class DocumentRecord:
             else:
                 raise Exception("No valid document.")
         except Exception as e:
+            print(e)
             raise e
 
     def delete_entry(self, docs):
@@ -130,6 +157,7 @@ class DocumentRecord:
                 )]
             ) if search_query.strip() else None
             # print(3, (page-1)*3)
+
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=[0.5, 0.5, 0.5, 0.5],
@@ -147,11 +175,25 @@ class DocumentRecord:
                     "type": hit.payload["type"],
                     "base_url": hit.payload["base_url"],
                     "page_title": hit.payload["page_title"],
-                    "inserted_by": hit.payload["inserted_by"],
+                    "updated_by": hit.payload["updated_by"],
+                    "last_updated": hit.payload["last_updated"],
                 })
             print(f"Returning results for {search_query} : ", len(
                 search_results))
-            return search_results
+            if page == 1:
+                count = self.qdrant_client.count(
+                    collection_name=self.collection_name,
+                    count_filter=models.Filter(
+                        must=[models.FieldCondition(
+                            key="page_title",
+                            match=models.MatchText(text=search_query.strip())
+                        )]
+                    ) if search_query.strip() != "" else None,
+                    exact=True,)
+                print(count)
+                return {"search_results": search_results, "count": int(str(count).split("=")[1]), "page_size": page_size}
+
+            return {"search_results": search_results}
         except Exception as e:
             raise CustomException(str(e), 500)
 

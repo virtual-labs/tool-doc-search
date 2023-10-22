@@ -194,6 +194,8 @@ def convert_to_markdown(html_content):
         elif tag.name == 'ul':
             for li in tag.find_all('li'):
                 markdown += f"- {li.text}\n"
+        else:
+            markdown += f"{tag.text}\n"
 
     return markdown
 
@@ -218,10 +220,11 @@ def extract_sections(markdown_content):
 
     for line in lines:
         line = line.strip()
-        if line.startswith('#'):
+        tokens = line.split(' ')
+        if tokens[0] == '#' or tokens[0] == '##':
             if current_section["heading"] is not None:
                 sections.append(current_section)
-            current_section = {"heading": line[1:].strip(), "content": ""}
+            current_section = {"heading": " ".join(tokens[1:]), "content": ""}
         else:
             current_section["content"] += line + '\n'
 
@@ -239,7 +242,6 @@ def get_payload(page_title, heading, text, url, type, base_url, user):
         "url": url.strip(),
         "type": type.strip(),
         "base_url": base_url.strip(),
-        "inserted_by": user.strip()
     }
 
 
@@ -333,6 +335,7 @@ def get_gdoc_accessiblility(link, document_id=""):
         return "public"
     elif response.status_code == 404:
         raise NotFoundException("Document not found. Invalid document link")
+    return None
 
 
 def get_chunks_from_gdoc(url, credentials, user):
@@ -409,6 +412,11 @@ def get_chunks_batch(docs, credentials, user):
 
 
 if __name__ == "__main__":
+    restult, base = get_chunks_batch([{
+        "type": "md",
+        "url": "https://github.com/virtual-labs/engineers-forum/blob/master/ph4/services/onboarding-hosting-process.md"
+    }], {}, "user")
+    print(json.dumps(restult, indent=4))
     pass
     # get_chunks(
     #     {

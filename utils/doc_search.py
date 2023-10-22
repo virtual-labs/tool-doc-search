@@ -6,6 +6,7 @@ import uuid
 from error.CustomException import CustomException
 from flask import jsonify
 import json
+import datetime
 
 
 class DocumentSearch:
@@ -107,7 +108,7 @@ class DocumentSearch:
             )
             print("Upserted batch", i+1)
 
-    def insert_doc_batch(self, docs, credentials, user="unknown"):
+    def insert_doc_batch(self, docs, credentials, user="unknown", operation="insert"):
         try:
             print("Getting document chunks for batch request from user :", user)
             data, base_urls = get_chunks_batch(docs, credentials, user)
@@ -150,12 +151,16 @@ class DocumentSearch:
                     "sections": 1,
                     "accessibility": data[0]["payload"]["accessibility"]
                 })
+                current_time = datetime.datetime.now()
                 records.append({
                     "page_title": data[0]["payload"]["page_title"],
                     "base_url": data[0]["payload"]["base_url"],
-                    "inserted_by": data[0]["payload"]["inserted_by"],
                     "accessibility": data[0]["payload"]["accessibility"],
-                    "type": data[0]["payload"]["type"]
+                    "type": data[0]["payload"]["type"],
+                    "created_by": user,
+                    "created_at": current_time,
+                    "updated_by": user,
+                    "last_updated": current_time
                 })
 
                 for i in range(1, len(data)):
@@ -171,12 +176,15 @@ class DocumentSearch:
                         records.append({
                             "page_title": data[i]["payload"]["page_title"],
                             "base_url": data[i]["payload"]["base_url"],
-                            "inserted_by": data[i]["payload"]["inserted_by"],
                             "accessibility": data[i]["payload"]["accessibility"],
-                            "type": data[i]["payload"]["type"]
+                            "type": data[i]["payload"]["type"],
+                            "created_by": user,
+                            "created_at": current_time,
+                            "updated_by": user,
+                            "last_updated": current_time
                         })
 
-                self.doc_record.insert_entry(records)
+                self.doc_record.insert_entry(records, operation=operation)
                 resultObj = {
                     "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results}
                 print(json.dumps(resultObj, indent=4))

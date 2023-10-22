@@ -17,10 +17,10 @@ def insert_document(link, document_type, credentials, name, doc_search):
         return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
 
 
-def insert_document_batch(docs, credentials, name, doc_search):
+def insert_document_batch(docs, credentials, name, doc_search, operation="insert"):
     try:
         result = doc_search.insert_doc_batch(
-            docs=docs, credentials=credentials, user=name)
+            docs=docs, credentials=credentials, user=name, operation=operation)
         return result
     except CustomException as e:
         return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})

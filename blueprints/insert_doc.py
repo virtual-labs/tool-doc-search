@@ -123,11 +123,11 @@ def protected_area():
             if "action" not in req:
                 raise BadRequestException("Please provide action")
 
-            if (req["action"] == "upsert"):
+            if (req["action"] == "insert" or req["action"] == "update"):
                 if "data" not in req:
                     raise BadRequestException("Please provide data")
                 result = insert_document_batch(
-                    docs=req["data"], credentials=credentials, name=session["name"], doc_search=doc_search)
+                    docs=req["data"], credentials=credentials, name=session["name"], doc_search=doc_search, operation=req["action"])
                 return jsonify(result)
 
             elif (req["action"] == "delete"):

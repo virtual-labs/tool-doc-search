@@ -56,7 +56,7 @@ document.getElementById("insert-button").addEventListener("click", function () {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ action: "upsert", data: postData }),
+    body: JSON.stringify({ action: "insert", data: postData }),
   })
     .then((response) => response.json())
     .then((data) => {
