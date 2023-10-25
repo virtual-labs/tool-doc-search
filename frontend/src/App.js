@@ -59,6 +59,7 @@ function App() {
         },
         body: JSON.stringify(query),
       };
+      console.log(config);
       setLoading(true);
       setPresent(default_section);
       let response = await fetch(url, config);
@@ -86,6 +87,7 @@ function App() {
     if (url === "#") return "Github / Google Document";
     if (type === "md") return "Markdown Github";
     if (type === "gdoc") return "Google Document";
+    if (type === "github") return "Github File";
     return "Unknown Type";
   };
 
@@ -169,10 +171,10 @@ function App() {
             </form>
           </div>
           <div className="flex m-2 mb-1">
-            {results.length === 0
+            {results?.length === 0
               ? "No results"
-              : results.length +
-                (results.length === 1 ? " result" : " results")}
+              : results?.length +
+                (results?.length === 1 ? " result" : " results")}
           </div>
           {loader && (
             <img
@@ -185,7 +187,7 @@ function App() {
           )}
           {!loader && (
             <div className="flex flex-1 flex-col overflow-auto">
-              {results.map((result) => {
+              {results?.map((result) => {
                 return <ResultBox result={result} setPresent={setPresent} />;
               })}
             </div>
@@ -237,11 +239,7 @@ const ResultBox = ({ result, setPresent }) => {
       <div className="result-heading">
         <h3 className="heading">{result.heading}</h3>
 
-        <div
-          className={result.type === "md" ? "file-type-md" : "file-type-gdoc"}
-        >
-          {result.type}
-        </div>
+        <div className={`file-type-${result.type}`}>{result.type}</div>
         <div
           className={
             result.accessibility === "public"
@@ -253,6 +251,7 @@ const ResultBox = ({ result, setPresent }) => {
         </div>
       </div>
       <div className="result-page-title">{result.document}</div>
+      <div className="result-page-url">{result.url}</div>
       <p className="paragraph">
         {getResultText(result.accessibility, result.text)}
       </p>

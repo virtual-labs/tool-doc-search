@@ -148,7 +148,7 @@ def parse_page_markdown(page_md):
 ###############################################################################################
 
 
-def fetch_markdown_from_github(github_url):
+def fetch_content_from_github(github_url):
     response = requests.get(github_url)
     if response.status_code == 404:
         raise NotFoundException("Document not found. Invalid document link")
@@ -270,7 +270,8 @@ def get_link_hash(base_url, heading, type):
             gdoc_url_with_anchor = f"{base_url}#heading={extracted_id}"
             return modified_heading, gdoc_url_with_anchor
     elif type == "md":
-        hash = heading.replace(' ', '-').lower()
+        hash = heading.replace(' ', '-').replace('.',
+                                                 '-').replace('--', '-').lower()
         hash = hash[1:] if hash[0] == '-' else hash
         github_url_with_anchor = f"{base_url}#{hash}"
         return heading, github_url_with_anchor
@@ -293,10 +294,13 @@ def generate_document_chunks(sections, base_url, page_title, type):
     return chunks
 
 
-def get_chunks_from_markdown(markdown_content, url, type, user):
+def get_chunks_from_markdown(markdown_content, url, type, user, page_title=""):
     print("Extracting headings from markdown")
     markdown_content = parse_page_markdown(markdown_content)
-    page_title = extract_first_heading(markdown_content, type)
+
+    page_title = page_title if page_title != "" else extract_first_heading(
+        markdown_content, type)
+
     sections = extract_sections(markdown_content)
     print("Generating chunks from markdown")
     chunks = generate_document_chunks(sections, url, page_title, type)
@@ -309,17 +313,39 @@ def get_chunks_from_markdown(markdown_content, url, type, user):
     return data
 
 
-def get_chunks_from_github(url, user):
+def get_chunks_from_md_github(url, user, page_title=""):
     if not url.endswith("md"):
         raise BadRequestException(f'Invalid url format {url}')
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     print(f"Fetching markdown from {github_raw_url}")
-    markdown_content = fetch_markdown_from_github(github_raw_url)
+    markdown_content = fetch_content_from_github(github_raw_url)
     print(f"Markdown fetched from {github_raw_url}")
-    data = get_chunks_from_markdown(markdown_content, url, "md", user)
+    data = get_chunks_from_markdown(
+        markdown_content, url, "md", user, page_title)
     newdata = []
+    for chunk in data:
+        chunk["payload"]["accessibility"] = "public"
+        newdata.append(chunk)
+    return newdata
+
+
+def get_chunks_from_github(url, user, page_title=""):
+    # if page_title.strip() == "":
+    #     raise Exception("Provide page title for unknown GitHub doc.")
+    github_raw_url = url.replace("https://github.com",
+                                 "https://raw.githubusercontent.com").replace("http://github.com",
+                                                                              "https://raw.githubusercontent.com").replace("/blob/", "/")
+    print(f"Fetching GitHub content from {github_raw_url}")
+    content = fetch_content_from_github(github_raw_url)
+    print(f"Content fetched from {github_raw_url}")
+    newdata = []
+    data = []
+    data.append(
+        get_point(content, page_title,
+                  page_title, url, "github", url, user)
+    )
     for chunk in data:
         chunk["payload"]["accessibility"] = "public"
         newdata.append(chunk)
@@ -338,7 +364,7 @@ def get_gdoc_accessiblility(link, document_id=""):
     return None
 
 
-def get_chunks_from_gdoc(url, credentials, user):
+def get_chunks_from_gdoc(url, credentials, user, page_title=""):
     if url.endswith("/"):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
@@ -354,7 +380,8 @@ def get_chunks_from_gdoc(url, credentials, user):
         elif accessibility == "private":
             markdown_content = fetch_google_doc_private(doc_id, credentials)
         print(f"Markdown fetched from google doc {url}")
-        data = get_chunks_from_markdown(markdown_content, url, "gdoc", user)
+        data = get_chunks_from_markdown(
+            markdown_content, url, "gdoc", user, page_title)
 
         newdata = []
         for d in data:
@@ -370,19 +397,6 @@ def get_chunks_from_gdoc(url, credentials, user):
         print("No ID found in the URL")
 
 
-def get_chunks(doc, credentials, user):
-    try:
-        chunks = []
-        if doc["type"] == "md":
-            chunks = get_chunks_from_github(doc["url"], user)
-        elif doc["type"] == "gdoc":
-            chunks = get_chunks_from_gdoc(doc["url"], credentials, user)
-        print(json.dumps(chunks, indent=4))
-        return chunks
-    except Exception as e:
-        raise e
-
-
 def get_chunks_batch(docs, credentials, user):
     print("Getting batch")
     try:
@@ -395,10 +409,19 @@ def get_chunks_batch(docs, credentials, user):
                 chunk = []
                 if doc["type"] == "md":
                     print("Getting chunks from github")
-                    chunk = get_chunks_from_github(doc["url"], user)
+                    chunk = get_chunks_from_md_github(
+                        doc["url"], user, page_title=doc["page_title"])
                 elif doc["type"] == "gdoc":
                     print("Getting chunks from google doc")
-                    chunk = get_chunks_from_gdoc(doc["url"], credentials, user)
+                    chunk = get_chunks_from_gdoc(
+                        doc["url"], credentials, user, page_title=doc["page_title"])
+                elif doc["type"] == "github":
+                    print("Getting chunks from github")
+                    chunk = get_chunks_from_github(
+                        doc["url"], user, page_title=doc["page_title"])
+                if (len(chunk) == 0):
+                    raise Exception(
+                        f"No headings found while parsing document {idx+1}")
                 for ch in chunk:
                     chunks.append(ch)
                 base_urls.append(doc["url"])

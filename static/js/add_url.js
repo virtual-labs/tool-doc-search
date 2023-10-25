@@ -1,17 +1,3 @@
-function validate_gdoc(url) {
-  let pref = "https://docs.google.com/document/d/";
-  url = url.trim();
-  return url.startsWith(pref) && url.length > pref.length;
-}
-
-// https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/developer-doc.md
-function validate_md(url) {
-  let pref = "https://github.com/";
-  url = url.trim();
-  let tokens = url.slice(8).split("/");
-  return url.startsWith(pref) && tokens[3] === "blob" && url.endsWith(".md");
-}
-
 function generate_url_div(i) {
   var division = document.createElement("div");
   division.className = "division";
@@ -24,9 +10,9 @@ function generate_url_div(i) {
   urlInput.type = "text";
   urlInput.name = "url_" + i;
   urlInput.placeholder = "Enter URL";
+  urlInput.className = "url-input";
   urlInput.id = "doc-url-input_" + i;
-  //   urlInput.required = true;
-  // <input type="hidden" id="custId" name="custId" value="3487">
+
   var tagLabel = document.createElement("span");
   tagLabel.textContent = "";
   tagLabel.className = `doctype-label`;
@@ -39,21 +25,19 @@ function generate_url_div(i) {
 
   urlInput.addEventListener("keyup", function (evt) {
     let url = evt.target.value;
-    if (validate_gdoc(url)) {
-      hiddenLabel.value = "gdoc";
-      tagLabel.textContent = "gdoc";
-      tagLabel.className = `doctype-label gdoc`;
-    } else if (validate_md(url)) {
-      hiddenLabel.value = "md";
-      tagLabel.textContent = "md";
-      tagLabel.className = `doctype-label md`;
-    } else {
-      hiddenLabel.value = "unknown";
-      tagLabel.textContent = "unknown";
-      tagLabel.className = `doctype-label`;
+    let doc_type = identifyDocumentType(url);
+    hiddenLabel.value = `${doc_type}`;
+    tagLabel.textContent = `${doc_type}`;
+    tagLabel.className = `doctype-label ${doc_type}`;
+    if (url.length && !division.querySelector(".page-title-input")) {
+      var pageTitleInput = document.createElement("input");
+      pageTitleInput.type = "text";
+      pageTitleInput.id = "page-title_" + i;
+      pageTitleInput.placeholder = "(Optional) Page title";
+      pageTitleInput.className = "page-title-input";
+      division.insertBefore(pageTitleInput, urlInput.nextSibling);
     }
   });
-
   division.appendChild(indexLabel);
   division.appendChild(urlInput);
   division.appendChild(tagLabel);

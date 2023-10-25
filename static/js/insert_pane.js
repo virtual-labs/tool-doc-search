@@ -12,6 +12,7 @@ function generateResultTable(data) {
   table += "</table>";
   return table;
 }
+
 document.getElementById("insert-button").addEventListener("click", function () {
   event.preventDefault();
   var selectedURLs = [];
@@ -20,14 +21,19 @@ document.getElementById("insert-button").addEventListener("click", function () {
   for (var i = 0; i < divisionCount; i++) {
     var tagLabel = document.getElementById("tag_" + i);
     var urlVal = document.getElementById("doc-url-input_" + i);
-    //
+    var pageTitle = document.getElementById("page-title_" + i);
     var tagValue = tagLabel.innerHTML.trim();
 
     if (tagValue === "") {
-      alert("URL cannot be empty for document " + (i + 1));
+      alert("Not supported URL for document " + (i + 1));
       return;
-    } else if (tagValue === "unknown") {
-      alert("unidentified URL type for document " + (i + 1));
+    } else if (
+      documentTypeIdentifiers[tagValue].page_title_req &&
+      pageTitle.value.trim() === ""
+    ) {
+      alert(
+        "Please specify page title for " + tagValue + " document " + (i + 1)
+      );
       return;
     } else {
       if (urlMap.hasOwnProperty(urlVal.value.trim())) {
@@ -38,9 +44,12 @@ document.getElementById("insert-button").addEventListener("click", function () {
       selectedURLs.push({
         url: urlVal.value,
         type: tagValue,
+        page_title: pageTitle.value.trim(),
       });
     }
   }
+
+  // console.log(selectedURLs);
 
   document.getElementById("loader").style.visibility = "visible";
   if (selectedURLs.length > 0) {
@@ -60,11 +69,8 @@ document.getElementById("insert-button").addEventListener("click", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      document.getElementById("loader").style.visibility = "hidden";
-
       var result = data;
       let resultPane = document.getElementById("result-pane-insert");
-      // alert(result);
       resultPane.innerHTML = "";
       if (result.hasOwnProperty("error")) {
         resultPane.innerHTML += "<h3>Error occurred</h3>";
@@ -80,7 +86,11 @@ document.getElementById("insert-button").addEventListener("click", function () {
       }
     })
     .catch((error) => {
+      console.error(error);
       alert("Error:", error);
+    })
+    .finally(() => {
+      document.getElementById("loader").style.visibility = "hidden";
     });
 });
 

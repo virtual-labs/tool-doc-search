@@ -5,7 +5,7 @@ from utils.doc_search import DocumentSearch
 from dotenv import load_dotenv
 import os
 from flask_cors import CORS, cross_origin
-
+import json
 load_dotenv()
 doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
                             api_key=os.getenv("QDRANT_API"),
@@ -16,6 +16,7 @@ search_doc = Blueprint('search_doc', __name__, url_prefix='/api/search')
 
 @search_doc.route('', methods=['POST'])
 def index():
+    print("Getting Search request")
     try:
         limit = 10
         thresh = 0.2
@@ -45,7 +46,7 @@ def index():
             if (type(data["page_title_filter"])) != str:
                 raise BadRequestException("page_title_filter  must be string")
             page_title_filter = data["page_title_filter"]
-
+        print(json.dumps(data, indent=4))
         result = doc_search.get_search_result(
             search_query=data["search_query"],
             limit=limit,
@@ -66,4 +67,5 @@ def index():
     except CustomException as e:
         return jsonify({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code}), e.status_code
     except Exception as e:
+        print(e)
         return jsonify({'error': 'An unexpected error occurred', 'message': str(e)}), 500

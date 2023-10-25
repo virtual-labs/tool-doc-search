@@ -2669,6 +2669,23 @@ textarea.w-select {
   position: relative;
 }
 
+.file-type-github {
+  color: #fff;
+  background-color: #252525;
+  border-radius: 10px;
+  flex: 0 auto;
+  order: 1;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 10px 0;
+  padding: 5px;
+  font-family: Open Sans, sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+  display: flex;
+  position: relative;
+}
+
 @media screen and (max-width: 991px) {
   .nav-menu-wrapper {
     background-color: rgba(0, 0, 0, 0);
@@ -2767,6 +2784,7 @@ textarea.w-select {
   font-size: 18px;
   padding: 10px;
   color: #00c9a8;
+  background-color: white;
 }
 
 .insert-doc-button:hover {
@@ -2775,4 +2793,9 @@ textarea.w-select {
 
 .insert-doc-button:active {
   background-color: #c8c7c7;
+}
+
+.result-page-url {
+  font-size: 11px;
+  color: #878686;
 }

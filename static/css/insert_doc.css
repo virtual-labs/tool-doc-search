@@ -1,5 +1,22 @@
 /* google app engine for flask */
 
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bbb;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
 body {
   background-image: url('/static/img/Background2.png');
   /* Replace 'your-image.jpg' with the path to your image */
@@ -19,9 +36,8 @@ body {
   width: 80%;
   margin: 0 auto;
   margin-top: 10px;
-
   position: absolute;
-  top: 20%;
+  top: 15%;
   left: 50%;
   transform: translate(-50%, 0%);
   -ms-transform: translate(-50%, 0%);
@@ -62,6 +78,8 @@ select {
   width: 85%;
   font-size: 16px;
 }
+
+
 
 select {
   width: 10%;
@@ -115,6 +133,9 @@ input[type="submit"]:active {
   background-color: rgb(0, 166, 255);
 }
 
+.doctype-label.github {
+  background-color: rgb(53, 52, 52);
+}
 
 .result-msg {
   font-size: 17px;
@@ -386,8 +407,8 @@ button:active {
 }
 
 .animate {
-  -webkit-animation: animatezoom 0.3s;
-  animation: animatezoom 0.3s;
+  -webkit-animation: animatezoom 0.1s;
+  animation: animatezoom 0.1s;
 }
 
 @-webkit-keyframes animatezoom {
@@ -432,4 +453,13 @@ button:active {
   background-color: #c2c1bf;
   color: #545454;
   cursor: not-allowed;
+}
+
+.url-input {
+  width: 60% !important
+}
+
+.page-title-input {
+  width: 25% !important;
+  margin-left: 5px;
 }

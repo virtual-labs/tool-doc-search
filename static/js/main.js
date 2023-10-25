@@ -11,7 +11,7 @@ function generateTable(data) {
     table += `<td><span class="accessibility-label ${item.accessibility}">${item.accessibility}</span></td>`;
     table += `<td>${new Date(item.last_updated)
       .toString()
-      .replace("(India Standard Time)", "(IST)")}</td>`;
+      .replace("GMT+0530 (India Standard Time)", "(IST)")}</td>`;
     table += `<td>${item.updated_by}</td>`;
     table += `</tr>`;
   }
@@ -110,7 +110,13 @@ document.getElementById("postButton").addEventListener("click", function () {
       var typeCell = row.cells[2];
       var documentURL = documentCell.querySelector("a").getAttribute("href");
       var documentType = typeCell.textContent;
-      selectedURLs.push({ url: documentURL, type: documentType });
+      selectedURLs.push({
+        url: documentURL,
+        type: documentType,
+        page_title: documentTypeIdentifiers[documentType].page_title_req
+          ? documentCell.querySelector("a").text
+          : "",
+      });
     }
   });
   if (selectedURLs.length > 0) {
@@ -210,7 +216,7 @@ document.getElementById("deleteButton").addEventListener("click", function () {
     .then((response) => response.json())
     .then((data) => {
       console.log(data);
-      load_docs(page_object.search_query, 1);
+      load_docs(page_object.search_query, page_object.page);
     })
     .catch((error) => {
       console.log(error);

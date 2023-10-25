@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from utils.document_parser import get_chunks, get_chunks_batch
+from utils.document_parser import get_chunks_batch
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
@@ -40,52 +40,6 @@ class DocumentSearch:
         )
         self.create_index()
 
-    def insert_doc(self, type, url, credentials, user="unknown"):
-        try:
-            doc = {
-                "url": url,
-                "type": type
-            }
-            data = get_chunks(doc, credentials, user)
-            print(json.dumps(data, indent=4))
-            # return []
-
-            if len(data):
-                self.qdrant_client.delete(
-                    collection_name=f"{self.collection_name}",
-                    points_selector=models.FilterSelector(
-                        filter=models.Filter(
-                            must=[
-                                models.FieldCondition(
-                                    key="base_url",
-                                    match=models.MatchValue(
-                                        value=data[0]["payload"]["base_url"]),
-                                ),
-                            ],
-                        )
-                    ),
-                )
-                payloads = []
-                vectors = []
-                ids = []
-                for chunk in data:
-                    ids.append(uuid.uuid4().int >> 64)
-                    vectors.append(self.encoder.encode(
-                        chunk["content"]).tolist())
-                    payloads.append(chunk["payload"])
-                self.qdrant_client.upsert(
-                    collection_name=f"{self.collection_name}",
-                    points=models.Batch(
-                        ids=ids,
-                        payloads=payloads,
-                        vectors=vectors
-                    ),
-                )
-
-            return data
-        except Exception as e:
-            raise e
-
     def batched(self, arr, batch_size):
         batches = [arr[i:i + batch_size]
                    for i in range(0, len(arr), batch_size)]
@@ -112,6 +66,8 @@ class DocumentSearch:
         try:
             print("Getting document chunks for batch request from user :", user)
             data, base_urls = get_chunks_batch(docs, credentials, user)
+            # print(json.dumps(data, indent=4))
+            # return []
             if len(data):
                 print("Deleting docs")
                 self.qdrant_client.delete(
@@ -193,6 +149,7 @@ class DocumentSearch:
             else:
                 raise Exception("Document(s) have no headings.")
         except Exception as e:
+            print(e)
             raise e
 
     def delete_doc(self, urls, user="unknown"):
@@ -231,15 +188,18 @@ class DocumentSearch:
 
     def get_search_result(self, search_query,
                           limit=10,
-                          thresh=0.2,
+                          thresh=0.0,
                           doc_filter="Any",
                           page_title_filter=""):
         try:
+
             if search_query == '':
                 return [-1]
             if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
                 return [-1]
+            print("Building filters")
             page_title_filter = page_title_filter.strip()
+
             must_conditions = []
             if (doc_filter != 'Any'):
                 must_conditions.append(models.FieldCondition(
@@ -253,7 +213,7 @@ class DocumentSearch:
             filter = models.Filter(
                 must=must_conditions
             ) if doc_filter != 'Any' or page_title_filter != "" else None
-
+            print("Filters build")
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=self.encoder.encode(
@@ -262,8 +222,12 @@ class DocumentSearch:
                 query_filter=filter,
                 score_threshold=thresh
             )
+            print("Got search results", len(hits))
             search_results = []
             for hit in hits:
+                parsed_text = hit.payload["text"].split("::")
+                if len(parsed_text) > 2:
+                    parsed_text = parsed_text[2].strip()
                 search_results.append({
                     "accessibility": hit.payload["accessibility"],
                     "type": hit.payload["type"],
@@ -271,11 +235,14 @@ class DocumentSearch:
                     "score": hit.score,
                     "heading": hit.payload["heading"],
                     "document": hit.payload["page_title"],
-                    "text": "" if hit.payload["accessibility"] == "private" else hit.payload["text"].split("::")[2].strip(),
+                    "text": "" if hit.payload["accessibility"] == "private" else parsed_text,
                 })
-
+            print(json.dumps(search_results, indent=4))
+            print("Search Results for", page_title_filter,
+                  search_query, len(search_results))
             return search_results
         except Exception as e:
+            print(e)
             raise CustomException(str(e), 500)
 
     # initializing functions

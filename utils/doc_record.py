@@ -1,7 +1,6 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from utils.document_parser import get_chunks, get_chunks_batch
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
@@ -145,7 +144,7 @@ class DocumentRecord:
         print("Searching Record DB for search_query=",
               search_query, "page=", page)
 
-        page_size = 5
+        page_size = 10
 
         try:
             page = int(page)
