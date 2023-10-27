@@ -234,6 +234,29 @@ def extract_sections(markdown_content):
     return sections
 
 
+def extract_sections_org(markdown_content):
+    sections = []
+    lines = markdown_content.split('\n')
+    current_section = {"heading": None, "content": ""}
+
+    for line in lines:
+        line = line.strip()
+        # print(line)
+        tokens = line.split(' ')
+        if tokens[0] == '*' or tokens[0] == '**':
+            if current_section["heading"] is not None:
+                sections.append(current_section)
+            # print(tokens)
+            current_section = {"heading": " ".join(tokens[1:]), "content": ""}
+        else:
+            current_section["content"] += line + '\n'
+
+    if current_section["heading"] is not None:
+        sections.append(current_section)
+    # print(json.dumps(sections, indent=4))
+    return sections
+
+
 def get_payload(page_title, heading, text, url, type, base_url, user):
     return {
         "page_title": page_title.strip(),
@@ -269,7 +292,7 @@ def get_link_hash(base_url, heading, type):
             modified_heading = heading.replace(match.group(0), '')
             gdoc_url_with_anchor = f"{base_url}#heading={extracted_id}"
             return modified_heading, gdoc_url_with_anchor
-    elif type == "md":
+    elif type == "md" or type == "org":
         hash = heading.replace(' ', '-').replace('.',
                                                  '-').replace('--', '-').lower()
         hash = hash[1:] if hash[0] == '-' else hash
@@ -313,6 +336,34 @@ def get_chunks_from_markdown(markdown_content, url, type, user, page_title=""):
     return data
 
 
+def extract_org_title(org_text):
+    document_title = "Untitled Document"
+    title_match = re.search(r'^\s*#\+title:(.*)', org_text, re.I | re.M)
+    if title_match:
+        document_title = title_match.group(1).strip()
+    else:
+        document_title = "Untitled Document"
+    return document_title
+
+
+def get_chunks_from_org(org_content, url, type, user, page_title=""):
+    print("Extracting headings from org")
+
+    page_title = page_title if page_title != "" else extract_org_title(
+        org_content)
+
+    sections = extract_sections_org(org_content)
+    print("Generating chunks from org")
+    chunks = generate_document_chunks(sections, url, page_title, type)
+    data = []
+    for chunk in chunks:
+        data.append(
+            get_point(chunk.text, chunk.page_title,
+                      chunk.heading, chunk.url, type, url, user)
+        )
+    return data
+
+
 def get_chunks_from_md_github(url, user, page_title=""):
     if not url.endswith("md"):
         raise BadRequestException(f'Invalid url format {url}')
@@ -324,6 +375,24 @@ def get_chunks_from_md_github(url, user, page_title=""):
     print(f"Markdown fetched from {github_raw_url}")
     data = get_chunks_from_markdown(
         markdown_content, url, "md", user, page_title)
+    newdata = []
+    for chunk in data:
+        chunk["payload"]["accessibility"] = "public"
+        newdata.append(chunk)
+    return newdata
+
+
+def get_chunks_from_org_github(url, user, page_title=""):
+    if not url.endswith("org"):
+        raise BadRequestException(f'Invalid url format {url}')
+    github_raw_url = url.replace("https://github.com",
+                                 "https://raw.githubusercontent.com").replace("http://github.com",
+                                                                              "https://raw.githubusercontent.com").replace("/blob/", "/")
+    print(f"Fetching ORG from {github_raw_url}")
+    markdown_content = fetch_content_from_github(github_raw_url)
+    print(f"ORG fetched from {github_raw_url}")
+    data = get_chunks_from_org(
+        markdown_content, url, "org", user, page_title)
     newdata = []
     for chunk in data:
         chunk["payload"]["accessibility"] = "public"
@@ -415,9 +484,9 @@ def get_chunks_batch(docs, credentials, user):
                     print("Getting chunks from google doc")
                     chunk = get_chunks_from_gdoc(
                         doc["url"], credentials, user, page_title=doc["page_title"])
-                elif doc["type"] == "github":
+                elif doc["type"] == "org":
                     print("Getting chunks from github")
-                    chunk = get_chunks_from_github(
+                    chunk = get_chunks_from_org_github(
                         doc["url"], user, page_title=doc["page_title"])
                 elif doc["type"] == "github":
                     print("Getting chunks from github")

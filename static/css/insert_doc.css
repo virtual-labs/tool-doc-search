@@ -134,7 +134,11 @@ input[type="submit"]:active {
 }
 
 .doctype-label.github {
-  background-color: rgb(53, 52, 52);
+  background-color: rgb(76, 76, 76);
+}
+
+.doctype-label.org {
+  background-color: rgb(66, 16, 116);
 }
 
 .doctype-label.unknown {

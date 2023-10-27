@@ -1,3 +1,5 @@
+let total_recs = 0;
+
 function generateTable(data) {
   let table = "<table>";
   table +=
@@ -43,8 +45,11 @@ async function load_docs(text, page) {
     if (page == 1) {
       page_object.page_limit = Math.ceil(data.count / data.page_size);
     }
+    if (data.count) total_recs = data.count;
+
     const nextButton = document.getElementById("next-button");
     const prevButton = document.getElementById("prev-button");
+
     if (page_object.page == page_object.page_limit) {
       nextButton.disabled = true;
     } else {
@@ -55,6 +60,7 @@ async function load_docs(text, page) {
     } else {
       prevButton.disabled = false;
     }
+
     data = data.search_results;
     console.log(data);
     let num = data.length;
@@ -72,7 +78,9 @@ async function load_docs(text, page) {
     let resultPane = document.getElementById("result-pane");
     resultPane.innerHTML = `<span>${num} ${
       num == 1 ? "document" : "documents"
-    }<span>`;
+    }<span>
+    <span style='float:right'>${total_recs} documents</span>
+      `;
 
     resultPane.innerHTML += generateTable(data);
     document

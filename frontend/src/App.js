@@ -90,8 +90,10 @@ function App() {
     if (url === "#") return "Github / Google Document";
     if (type === "md") return "Markdown Github";
     if (type === "gdoc") return "Google Document";
+    if (type === "org") return "ORG mode File";
     if (type === "github") return "Github File";
-    return "Unknown Type";
+    if (type === "unknown") return "Unknown Type";
+    return "Not Supported";
   };
 
   return (
