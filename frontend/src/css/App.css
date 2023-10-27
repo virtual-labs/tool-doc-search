@@ -2451,10 +2451,14 @@ textarea.w-select {
   border-radius: 10px;
   justify-content: center;
   align-items: center;
-  padding: 10px;
+  padding: 5px;
   font-family: Open Sans, sans-serif;
-  text-decoration: underline;
   display: flex;
+}
+
+.section-link:hover {
+  background-color: #017c6a;
+  text-decoration: underline;
 }
 
 .section-type {
@@ -2672,6 +2676,23 @@ textarea.w-select {
 .file-type-github {
   color: #fff;
   background-color: #252525;
+  border-radius: 10px;
+  flex: 0 auto;
+  order: 1;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 10px 0;
+  padding: 5px;
+  font-family: Open Sans, sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+  display: flex;
+  position: relative;
+}
+
+.file-type-unknown {
+  color: #fff;
+  background-color: #000000;
   border-radius: 10px;
   flex: 0 auto;
   order: 1;

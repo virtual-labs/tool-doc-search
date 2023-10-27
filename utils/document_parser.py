@@ -419,6 +419,16 @@ def get_chunks_batch(docs, credentials, user):
                     print("Getting chunks from github")
                     chunk = get_chunks_from_github(
                         doc["url"], user, page_title=doc["page_title"])
+                elif doc["type"] == "github":
+                    print("Getting chunks from github")
+                    chunk = get_chunks_from_github(
+                        doc["url"], user, page_title=doc["page_title"])
+                elif doc["type"] == "unknown":
+                    print("Generating chunk for unknown doc")
+                    point = get_point(doc["page_title"], doc["page_title"],
+                                      doc["page_title"], doc["url"], "unknown", doc["url"], user)
+                    point["payload"]["accessibility"] = "public"
+                    chunk = [point]
                 if (len(chunk) == 0):
                     raise Exception(
                         f"No headings found while parsing document {idx+1}")

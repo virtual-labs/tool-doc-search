@@ -6,10 +6,11 @@ from dotenv import load_dotenv
 import os
 from flask_cors import CORS, cross_origin
 import json
+from utils.doc_instances import doc_search
 load_dotenv()
-doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
-                            api_key=os.getenv("QDRANT_API"),
-                            collection_name=os.getenv("QDRANT_COLLECTION"))
+# doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
+#                             api_key=os.getenv("QDRANT_API"),
+#                             collection_name=os.getenv("QDRANT_COLLECTION"))
 
 search_doc = Blueprint('search_doc', __name__, url_prefix='/api/search')
 
@@ -19,7 +20,7 @@ def index():
     print("Getting Search request")
     try:
         limit = 10
-        thresh = 0.2
+        thresh = 0.0
         doc_filter = "Any"
         page_title_filter = ""
 
@@ -53,6 +54,7 @@ def index():
             thresh=thresh,
             doc_filter=doc_filter,
             page_title_filter=page_title_filter,)
+        # print(json.dumps(result, indent=4))
         response = jsonify({"hits": len(result), "result": result})
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Methods',

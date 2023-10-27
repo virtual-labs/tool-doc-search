@@ -43,7 +43,10 @@ function App() {
   const getResults = async (e) => {
     e.preventDefault();
     if (loader) return;
-    if (query.search_query === "") {
+    if (
+      query.search_query.trim() === "" &&
+      query.page_title_filter.trim() === ""
+    ) {
       return;
     }
 

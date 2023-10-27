@@ -188,12 +188,12 @@ class DocumentSearch:
 
     def get_search_result(self, search_query,
                           limit=10,
-                          thresh=0.0,
+                          thresh=0.2,
                           doc_filter="Any",
                           page_title_filter=""):
         try:
 
-            if search_query == '':
+            if search_query == '' and page_title_filter == '':
                 return [-1]
             if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
                 return [-1]
@@ -217,7 +217,7 @@ class DocumentSearch:
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=self.encoder.encode(
-                    search_query).tolist(),
+                    search_query or page_title_filter).tolist(),
                 limit=int(limit),
                 query_filter=filter,
                 score_threshold=thresh

@@ -6,25 +6,14 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
-from dotenv import load_dotenv
 from error.CustomException import BadRequestException
 from utils.insert_doc_util import insert_document_batch
+from utils.doc_instances import doc_search, doc_record
+import json
 
-
-from utils.doc_search import DocumentSearch
-from utils.doc_record import DocumentRecord
 
 insert_doc = Blueprint('insert_doc', __name__, url_prefix='/insert_doc')
-load_dotenv()
 
-doc_record = DocumentRecord(url=os.getenv("QDRANT_URL"),
-                            api_key=os.getenv(
-    "QDRANT_API"),
-    collection_name=os.getenv("QDRANT_RECORD_COLLECTION"))
-doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
-                            api_key=os.getenv("QDRANT_API"),
-                            collection_name=os.getenv("QDRANT_COLLECTION"),
-                            doc_record=doc_record)
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
@@ -119,6 +108,9 @@ def protected_area():
         print("Getting ", request.method)
         if request.method == 'POST':
             req = request.json
+
+            # print(json.dumps(req, indent=4, sort_keys=True))
+            # return jsonify({"message": "Invalid action"})
 
             if "action" not in req:
                 raise BadRequestException("Please provide action")

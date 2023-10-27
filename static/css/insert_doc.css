@@ -137,6 +137,10 @@ input[type="submit"]:active {
   background-color: rgb(53, 52, 52);
 }
 
+.doctype-label.unknown {
+  background-color: rgb(0, 0, 0);
+}
+
 .result-msg {
   font-size: 17px;
 }
@@ -403,7 +407,7 @@ button:active {
   border-radius: 10px;
   margin: 5% auto 15% auto;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 60%;
+  width: 70%;
 }
 
 .animate {
