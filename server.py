@@ -1,7 +1,7 @@
 from flask import Flask
 from blueprints.insert_doc import insert_doc
 from blueprints.search_doc import search_doc
-# from blueprints.update_doc import update_doc
+
 import uuid
 from flask_cors import CORS
 

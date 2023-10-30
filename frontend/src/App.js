@@ -3,6 +3,7 @@ import "./css/index.css";
 import "./css/App.css";
 import NavImg from "./media/download.png";
 import LoadingImg from "./media/loading-73.gif";
+import Table from "./Table";
 
 const default_section = {
   accessibility: "public",
@@ -17,7 +18,12 @@ const document_types = [{ type: "md" }, { type: "gdoc" }];
 
 const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
 
-const getResultText = (accessibility, text, present = false) => {
+const getResultText = (accessibility, text, type, present = false) => {
+  // alert(type);
+  if (type === "xlsx" && present) {
+    let data = JSON.parse(text);
+    return <Table data={data} />;
+  }
   if (accessibility === "private") {
     return "This is a private document.";
   }
@@ -229,7 +235,12 @@ function App() {
             <h1 className="page-title">{present.document}</h1>
             <h3 className="section-heading">{present.heading}</h3>
             <p className="section-content">
-              {getResultText(present.accessibility, present.text, true)}
+              {getResultText(
+                present.accessibility,
+                present.text,
+                present.type,
+                true
+              )}
             </p>
           </div>
         </div>
@@ -243,6 +254,7 @@ const ResultBox = ({ result, setPresent }) => {
     setPresent(result);
     // console.log(result);
   };
+  console.log(result);
   return (
     <div className="result-box" onClick={() => showChange(result)}>
       <div className="result-heading">
@@ -262,7 +274,7 @@ const ResultBox = ({ result, setPresent }) => {
       <div className="result-page-title">{result.document}</div>
       <div className="result-page-url">{result.url}</div>
       <p className="paragraph">
-        {getResultText(result.accessibility, result.text)}
+        {getResultText(result.accessibility, result.text, result.type)}
       </p>
     </div>
   );

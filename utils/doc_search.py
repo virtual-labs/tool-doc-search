@@ -233,7 +233,7 @@ class DocumentSearch:
                     "score": hit.score,
                     "heading": hit.payload["heading"],
                     "document": hit.payload["page_title"],
-                    "text": "" if hit.payload["accessibility"] == "private" else parsed_text,
+                    "text": parsed_text,
                 })
             print(json.dumps(search_results, indent=4))
             print("Search Results for", page_title_filter,

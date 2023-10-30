@@ -8,9 +8,6 @@ from flask_cors import CORS, cross_origin
 import json
 from utils.doc_instances import doc_search
 load_dotenv()
-# doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
-#                             api_key=os.getenv("QDRANT_API"),
-#                             collection_name=os.getenv("QDRANT_COLLECTION"))
 
 search_doc = Blueprint('search_doc', __name__, url_prefix='/api/search')
 

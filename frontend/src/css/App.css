@@ -2853,4 +2853,49 @@ textarea.w-select {
 .result-page-url {
   font-size: 11px;
   color: #878686;
+  white-space: normal;
+  overflow: hidden;
+}
+
+/* styles.css */
+.google-sheet-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, sans-serif;
+}
+
+.google-sheet-table th {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.google-sheet-table th:first-child {
+  text-align: left;
+}
+
+.google-sheet-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.google-sheet-table input {
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px;
+  font-family: Arial, sans-serif;
+}
+
+.extend-table-row {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.extend-table-cell {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
 }
