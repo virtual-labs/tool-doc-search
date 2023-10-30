@@ -1,4 +1,5 @@
 .env
 blueprints/client_secret.json
+utils/g-sheet-secret.json
 venv/
 frontend/node_modules/

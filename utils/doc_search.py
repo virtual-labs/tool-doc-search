@@ -194,9 +194,7 @@ class DocumentSearch:
         try:
 
             if search_query == '' and page_title_filter == '':
-                return [-1]
-            if not (doc_filter == "md" or doc_filter == "gdoc" or doc_filter == "Any"):
-                return [-1]
+                return []
             print("Building filters")
             page_title_filter = page_title_filter.strip()
 

@@ -4,6 +4,12 @@ from bs4 import BeautifulSoup
 from error.CustomException import NotFoundException, BadRequestException
 import json
 from googleapiclient.discovery import build
+from google.oauth2 import service_account
+import pandas as pd
+import gspread
+import os
+import pathlib
+import pandas as pd
 
 
 class DocumentChunk:
@@ -148,6 +154,24 @@ def parse_page_markdown(page_md):
 ###############################################################################################
 
 
+def get_payload(page_title, heading, text, url, type, base_url, user):
+    return {
+        "page_title": page_title.strip(),
+        "heading": heading.strip(),
+        "text": text.strip(),
+        "url": url.strip(),
+        "type": type.strip(),
+        "base_url": base_url.strip(),
+    }
+
+
+def get_point(text, page_title, heading, url, type, base_url, user):
+    return {
+        "content": text.strip(),
+        "payload": get_payload(page_title, heading, text, url, type, base_url, user)
+    }
+
+
 def fetch_content_from_github(github_url):
     response = requests.get(github_url)
     if response.status_code == 404:
@@ -173,6 +197,96 @@ def fetch_google_doc_private(doc_id, credentials):
     response = request.execute()
     print(f"Fetching markdown from google doc with id {doc_id}")
     return convert_to_markdown(response.decode('utf-8'))
+
+
+def fetch_google_sheet(doc_id):
+    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+    response = requests.get(url)
+    if response.status_code == 404:
+        raise NotFoundException("Document not found. Invalid document link")
+    print(f"Fetching markdown from google doc with id {doc_id}")
+    return convert_to_markdown(response.content)
+
+
+def fetch_google_sheet_private(doc_id, credentials, user, page_title=""):
+    print("Strated extracting")
+    GSHEET_SECRET = json.load(open(os.path.join(
+        pathlib.Path(__file__).parent, "g-sheet-secret.json")))
+    credentials = service_account.Credentials.from_service_account_info(
+        GSHEET_SECRET)
+    scope = ['https://www.googleapis.com/auth/spreadsheets.readonly',
+             'https://www.googleapis.com/auth/drive.readonly']
+    creds_with_scope = credentials.with_scopes(scope)
+    client = gspread.authorize(creds_with_scope)
+    print("gspread authorized")
+    spreadsheet = client.open_by_url(
+        f'https://docs.google.com/spreadsheets/d/{doc_id}/edit#gid=0')
+
+    page_title = page_title if page_title != "" else spreadsheet.title
+
+    worksheets = spreadsheet.worksheets()
+    gsheet = []
+    for worksheet in worksheets:
+        sheet_title = worksheet.title
+        worksheet_gid = worksheet.id
+        print(f"Reading data from {sheet_title}:")
+        data = worksheet.get_values("A1:Z10")
+        gsheet.append({"sheet_title": sheet_title,
+                      "sheet_id": worksheet_gid, "content": json.dumps(data)})
+    return page_title, gsheet
+
+
+def generate_worksheet_chunks(sections, base_url, page_title):
+    chunks = []
+    for section in sections:
+        heading = section["sheet_title"].strip()
+        link = base_url + "/edit#gid=" + str(section["sheet_id"])
+        chunk = DocumentChunk(
+            heading, f"{heading} of {page_title} :: {page_title} :: {section['content']}",
+            link, page_title)
+        chunks.append(chunk)
+    return chunks
+
+
+def get_chunks_from_sheet(worksheet_data, url, type, user, page_title):
+    chunks = generate_worksheet_chunks(worksheet_data, url, page_title)
+    data = []
+    for chunk in chunks:
+        data.append(
+            get_point(chunk.text, chunk.page_title,
+                      chunk.heading, chunk.url, type, url, user)
+        )
+    return data
+
+
+def get_chunks_from_xlsx(url, credentials, user, page_title=""):
+    if url.endswith("/"):
+        url = url[:-1]
+    match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    print(f"Getting accessiblility of {url} ")
+    accessibility = "private"
+    print(f"Accessiblility of {url} is {accessibility}")
+    if match:
+        doc_id = match.group(1)
+        print(f"Fetching google sheet {url}")
+        spreadsheet_title, worksheets = fetch_google_sheet_private(
+            doc_id, credentials, user, page_title)
+        print(f"Worksheets fetched from google sheet {url}")
+        print("Start generating chunks")
+        data = get_chunks_from_sheet(
+            worksheets, url, "xlsx", user, spreadsheet_title)
+        print("Chunks generated")
+        newdata = []
+        for d in data:
+            newpayload = d["payload"]
+            newpayload["accessibility"] = accessibility
+            newdata.append({
+                "content": d["content"],
+                "payload": newpayload
+            })
+        return newdata
+    else:
+        print("No ID found in the URL")
 
 
 def convert_to_markdown(html_content):
@@ -255,24 +369,6 @@ def extract_sections_org(markdown_content):
         sections.append(current_section)
     # print(json.dumps(sections, indent=4))
     return sections
-
-
-def get_payload(page_title, heading, text, url, type, base_url, user):
-    return {
-        "page_title": page_title.strip(),
-        "heading": heading.strip(),
-        "text": text.strip(),
-        "url": url.strip(),
-        "type": type.strip(),
-        "base_url": base_url.strip(),
-    }
-
-
-def get_point(text, page_title, heading, url, type, base_url, user):
-    return {
-        "content": text.strip(),
-        "payload": get_payload(page_title, heading, text, url, type, base_url, user)
-    }
 
 
 def get_google_doc_heading_id(heading):
@@ -483,6 +579,10 @@ def get_chunks_batch(docs, credentials, user):
                 elif doc["type"] == "gdoc":
                     print("Getting chunks from google doc")
                     chunk = get_chunks_from_gdoc(
+                        doc["url"], credentials, user, page_title=doc["page_title"])
+                elif doc["type"] == "xlsx":
+                    print("Getting chunks from google sheets")
+                    chunk = get_chunks_from_xlsx(
                         doc["url"], credentials, user, page_title=doc["page_title"])
                 elif doc["type"] == "org":
                     print("Getting chunks from github")

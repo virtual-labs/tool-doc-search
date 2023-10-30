@@ -28,6 +28,7 @@ flow = Flow.from_client_secrets_file(
         "https://www.googleapis.com/auth/drive.readonly",
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
         "openid"],
     redirect_uri=os.getenv("CALLBACK_URL")
 )

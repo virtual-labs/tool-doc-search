@@ -25,5 +25,4 @@ def not_found_error(error):
 if __name__ == '__main__':
     app.register_blueprint(insert_doc)
     app.register_blueprint(search_doc)
-    # app.register_blueprint(update_doc)
     app.run(debug=True)

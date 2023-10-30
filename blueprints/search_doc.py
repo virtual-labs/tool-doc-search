@@ -39,7 +39,7 @@ def index():
                 raise BadRequestException("thresh must be float")
             thresh = data["thresh"]
         if "doc_filter" in data:
-            if data["doc_filter"] != "md" and data["doc_filter"] != "gdoc" and data["doc_filter"] != "Any":
+            if data["doc_filter"] != "md" and data["doc_filter"] != "xlsx" and data["doc_filter"] != "gdoc" and data["doc_filter"] != "Any":
                 raise BadRequestException(
                     "doc_filter must be 'md' or 'gdoc' or 'Any'")
             doc_filter = data["doc_filter"]
@@ -63,10 +63,10 @@ def index():
                              'Content-Type, Authorization, X-Requested-With')
 
         # "Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS"
-
         return response
 
     except CustomException as e:
+        print(e)
         return jsonify({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code}), e.status_code
     except Exception as e:
         print(e)

@@ -13,6 +13,8 @@ const default_section = {
   url: "#",
 };
 
+const document_types = [{ type: "md" }, { type: "gdoc" }];
+
 const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
 
 const getResultText = (accessibility, text, present = false) => {
@@ -90,6 +92,7 @@ function App() {
     if (url === "#") return "Github / Google Document";
     if (type === "md") return "Markdown Github";
     if (type === "gdoc") return "Google Document";
+    if (type === "xlsx") return "Google Sheet";
     if (type === "org") return "ORG mode File";
     if (type === "github") return "Github File";
     if (type === "unknown") return "Unknown Type";
@@ -172,6 +175,7 @@ function App() {
                 <option value="Any">Any</option>
                 <option value="md">md</option>
                 <option value="gdoc">gdoc</option>
+                <option value="xlsx">xlsx</option>
               </select>
             </form>
           </div>
