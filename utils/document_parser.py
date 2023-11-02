@@ -433,12 +433,12 @@ def get_chunks_from_markdown(markdown_content, url, type, user, page_title=""):
 
 
 def extract_org_title(org_text):
-    document_title = "Untitled Document"
+    document_title = None
     title_match = re.search(r'^\s*#\+title:(.*)', org_text, re.I | re.M)
     if title_match:
         document_title = title_match.group(1).strip()
     else:
-        document_title = "Untitled Document"
+        document_title = None
     return document_title
 
 
@@ -447,7 +447,8 @@ def get_chunks_from_org(org_content, url, type, user, page_title=""):
 
     page_title = page_title if page_title != "" else extract_org_title(
         org_content)
-
+    if page_title is None:
+        raise BadRequestException("Provide page title for unknown ORG doc.")
     sections = extract_sections_org(org_content)
     print("Generating chunks from org")
     chunks = generate_document_chunks(sections, url, page_title, type)
