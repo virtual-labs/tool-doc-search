@@ -66,8 +66,9 @@ class DocumentSearch:
         try:
             print("Getting document chunks for batch request from user :", user)
             data, base_urls = get_chunks_batch(docs, credentials, user)
-            # print(json.dumps(data, indent=4))
-            # return []
+            print(json.dumps(data, indent=4))
+            print(len(data))
+            return []
             if len(data):
                 print("Deleting docs")
                 self.qdrant_client.delete(
@@ -188,7 +189,7 @@ class DocumentSearch:
 
     def get_search_result(self, search_query,
                           limit=10,
-                          thresh=0.2,
+                          thresh=0.0,
                           doc_filter="Any",
                           page_title_filter=""):
         try:

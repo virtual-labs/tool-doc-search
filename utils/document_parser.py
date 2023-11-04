@@ -5,11 +5,9 @@ from error.CustomException import NotFoundException, BadRequestException
 import json
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import pandas as pd
 import gspread
 import os
 import pathlib
-import pandas as pd
 import io
 import uuid
 from llmsherpa.readers import LayoutPDFReader
@@ -568,15 +566,17 @@ def get_chunks_from_gdoc(url, credentials, user, page_title=""):
 
 
 def extract_pdf_sections(file_name):
+
     def remove_unicode(input_string):
-        return re.sub(r'[^\x00-\x7F]+', '', input_string)
+        return re.sub(r'[^\x00-\x7F]', ' ', input_string)
 
     def get_page_number(lst, current_page=0):
-        for S in lst:
+        print(current_page, pgno, len(lst))
+        for s in lst:
+            pattern = re.compile(re.escape(s), re.IGNORECASE)
             for i in range(current_page, pgno):
-                PgOb = obj.pages[i]
-                Text = PgOb.extract_text()
-                if re.search(S, Text):
+                text = Text[i]
+                if pattern.search(text):
                     current_page = i
                     return i
         return current_page
@@ -585,22 +585,34 @@ def extract_pdf_sections(file_name):
     llmsherpa_api_url = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
     pdf_url = file_name
     pdf_reader = LayoutPDFReader(llmsherpa_api_url)
+    print("Started processing pdf")
     doc = pdf_reader.read_pdf(pdf_url)
+    print("Completed pdf processing")
     current_page = 0
+    pages = obj.pages
+    pgno = len(pages)
 
-    pgno = len(obj.pages)
+    Text = [pages[i].extract_text() for i in range(0, pgno)]
 
     sections = []
-    for section in doc.sections():
+    print("Started generating sections", len(doc.sections()))
+    # strr = ""
+    for idx, section in enumerate(doc.sections()):
         title = (remove_unicode(section.title)).strip()
         text = remove_unicode(section.to_text(
             include_children=True, recurse=True).strip())
-        if title != text and len(title) >= 10:
+        if (title != text) and (len(title) >= 10) and ("=" not in title):
             lines = [t.strip() for t in text.split("\n")[0:10]]
-            current_page = get_page_number(lines, current_page)
+            current_page = get_page_number(lines[:4], current_page)
             trimmed_text = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
+            # strr += title
+            # strr += "\n"
             sections.append(
                 {"title": title, "text": trimmed_text+" ...", "page": current_page+1})
+    # with open("x.txt", 'w') as file:
+    #     file.write(strr)
+
+    print("Sections generated")
     return sections
 
 

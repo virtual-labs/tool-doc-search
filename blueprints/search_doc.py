@@ -1,10 +1,7 @@
 from flask import Blueprint
 from flask import Flask, request, jsonify
 from error.CustomException import CustomException, BadRequestException
-from utils.doc_search import DocumentSearch
 from dotenv import load_dotenv
-import os
-from flask_cors import CORS, cross_origin
 import json
 from utils.doc_instances import doc_search
 from utils.doc_info import is_valid_doc_type

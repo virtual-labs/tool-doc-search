@@ -28,7 +28,7 @@ function App() {
   const [query, setQuery] = useState({
     search_query: "",
     limit: 10,
-    thresh: 0.2,
+    thresh: 0.15,
     doc_filter: "Any",
     page_title_filter: "",
   });
