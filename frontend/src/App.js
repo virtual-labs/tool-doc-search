@@ -9,6 +9,7 @@ import {
   DOCUMENT_TYPES,
   INSERT_DOC_URL,
 } from "./utils/config_data";
+import React from "react";
 
 const getResultText = (accessibility, text, type, present = false) => {
   if (type === "xlsx" && present) {
@@ -18,10 +19,22 @@ const getResultText = (accessibility, text, type, present = false) => {
   if (accessibility === "private") {
     return "This is a private document.";
   }
-  if (text.length > 200 && !present) {
-    return text.slice(0, 200) + "...";
+  if (!present) {
+    if (text.length > 200) return text.slice(0, 200) + "...";
+    else return text;
   }
-  return text;
+  const lines = String(text)?.split("\n");
+  const textWithLineBreaks = lines.map((line, index) => (
+    <React.Fragment key={index}>
+      {line.split("\t").map((part, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>} {part}
+        </React.Fragment>
+      ))}
+      {index !== lines.length - 1 && <br />}
+    </React.Fragment>
+  ));
+  return textWithLineBreaks;
 };
 
 function App() {
@@ -66,10 +79,11 @@ function App() {
       setPresent(default_section);
       let response = await fetch(url, config);
       response = await response.json();
-      setLoading(false);
       setResults(response.result);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,6 +97,20 @@ function App() {
 
   const setQueryPageFilter = (e) => {
     setQuery({ ...query, page_title_filter: e.target.value });
+  };
+
+  const isDrivePDF = (doc) => {
+    let slices = present.url.split("#");
+    return (
+      present.type === "drive" && slices[slices.length - 1]?.startsWith("page=")
+    );
+  };
+
+  const getPageSpan = (doc) => {
+    let slices = present.url.split("#");
+    let page_comp = slices[slices.length - 1];
+    let page_num = Number(page_comp.slice(5, page_comp.length));
+    return <span className="drive-pdf-pagenum">Page {page_num}</span>;
   };
 
   const getHeading = (url, type) => {
@@ -223,7 +251,10 @@ function App() {
           </div>
           <div className="flex-1 flex flex-col p-0 overflow-auto">
             <h1 className="page-title">{present.document}</h1>
-            <h3 className="section-heading">{present.heading}</h3>
+            <h3 className="section-heading">
+              {present.heading}
+              {isDrivePDF(present) && getPageSpan(present)}
+            </h3>
             <p className="section-content">
               {getResultText(
                 present.accessibility,

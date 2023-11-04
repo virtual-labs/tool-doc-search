@@ -581,13 +581,16 @@ def extract_pdf_sections(file_name):
                     return i
         return current_page
 
-    obj = PyPDF2.PdfReader(file_name)
     llmsherpa_api_url = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
     pdf_url = file_name
+
+    obj = PyPDF2.PdfReader(file_name)
     pdf_reader = LayoutPDFReader(llmsherpa_api_url)
+
     print("Started processing pdf")
     doc = pdf_reader.read_pdf(pdf_url)
     print("Completed pdf processing")
+
     current_page = 0
     pages = obj.pages
     pgno = len(pages)
@@ -596,7 +599,6 @@ def extract_pdf_sections(file_name):
 
     sections = []
     print("Started generating sections", len(doc.sections()))
-    # strr = ""
     for idx, section in enumerate(doc.sections()):
         title = (remove_unicode(section.title)).strip()
         text = remove_unicode(section.to_text(
@@ -605,12 +607,8 @@ def extract_pdf_sections(file_name):
             lines = [t.strip() for t in text.split("\n")[0:10]]
             current_page = get_page_number(lines[:4], current_page)
             trimmed_text = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
-            # strr += title
-            # strr += "\n"
             sections.append(
                 {"title": title, "text": trimmed_text+" ...", "page": current_page+1})
-    # with open("x.txt", 'w') as file:
-    #     file.write(strr)
 
     print("Sections generated")
     return sections
