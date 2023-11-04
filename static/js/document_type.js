@@ -18,11 +18,10 @@ function validate_org(url) {
   return url.startsWith(pref) && tokens[3] === "blob" && url.endsWith(".org");
 }
 
-function validate_pdf(url) {
-  let pref = "https://github.com/";
+function validate_drive(url) {
+  let pref = "https://drive.google.com/file/d/";
   url = url.trim();
-  let tokens = url.slice(8).split("/");
-  return url.startsWith(pref) && tokens[3] === "blob" && url.endsWith(".md");
+  return url.startsWith(pref) && url.length > pref.length;
 }
 
 function validate_github(url) {
@@ -58,6 +57,11 @@ const documentTypeIdentifiers = {
   xlsx: {
     page_title_req: false,
     validate: validate_xlsx,
+    fetch_content: true,
+  },
+  drive: {
+    page_title_req: false,
+    validate: validate_drive,
     fetch_content: true,
   },
   org: {

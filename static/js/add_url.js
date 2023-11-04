@@ -36,11 +36,23 @@ function generate_url_div(i) {
     let fetchContentCheckBox = document.createElement("input");
     fetchContentCheckBox.type = "checkbox";
 
-    if (url.length && !division.querySelector(".page-title-input")) {
+    let currentPageTitleInput = division.querySelector(".page-title-input");
+
+    if (url.length && !currentPageTitleInput) {
       pageTitleInput.id = "page-title_" + i;
       pageTitleInput.placeholder = "(Optional) Page title";
       pageTitleInput.className = "page-title-input";
       division.insertBefore(pageTitleInput, urlInput.nextSibling);
+    }
+    // alert(doc_type);
+    if (
+      doc_type &&
+      documentTypeIdentifiers[doc_type].page_title_req &&
+      currentPageTitleInput
+    ) {
+      currentPageTitleInput.placeholder = "(Required) Page title";
+    } else if (currentPageTitleInput) {
+      currentPageTitleInput.placeholder = "(Optional) Page title";
     }
 
     if (url.length && !division.querySelector(".fetch-content-checkbox")) {

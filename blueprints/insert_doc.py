@@ -25,10 +25,12 @@ client_secrets_file = os.path.join(
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
     scopes=[
-        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive",
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
         'https://www.googleapis.com/auth/spreadsheets.readonly',
+        "https://www.googleapis.com/auth/drive.metadata.readonly",
         "openid"],
     redirect_uri=os.getenv("CALLBACK_URL")
 )

@@ -145,6 +145,10 @@ input[type="submit"]:active {
   background-color: rgb(66, 16, 116);
 }
 
+.doctype-label.drive {
+  background-color: #cfa200;
+}
+
 .doctype-label.unknown {
   background-color: rgb(0, 0, 0);
 }

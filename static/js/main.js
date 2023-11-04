@@ -73,6 +73,7 @@ async function load_docs(text, page) {
       console.log(`Page ${page_object.page}`);
       return;
     }
+
     pageText.innerText = `Page ${page_object.page} of ${page_object.page_limit}`;
     console.log(`Page ${page_object.page}`);
     let resultPane = document.getElementById("result-pane");

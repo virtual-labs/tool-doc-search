@@ -10,6 +10,10 @@ import gspread
 import os
 import pathlib
 import pandas as pd
+import io
+import uuid
+from llmsherpa.readers import LayoutPDFReader
+import PyPDF2
 
 
 class DocumentChunk:
@@ -190,8 +194,8 @@ def fetch_google_doc(doc_id):
 
 
 def fetch_google_doc_private(doc_id, credentials):
-    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
-    response = requests.get(url)
+    # url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+    # response = requests.get(url)
     service = build('drive', 'v3', credentials=credentials)
     request = service.files().export(fileId=doc_id, mimeType='text/html')
     response = request.execute()
@@ -563,6 +567,143 @@ def get_chunks_from_gdoc(url, credentials, user, page_title=""):
         print("No ID found in the URL")
 
 
+def extract_pdf_sections(file_name):
+    def remove_unicode(input_string):
+        return re.sub(r'[^\x00-\x7F]+', '', input_string)
+
+    def get_page_number(lst, current_page=0):
+        for S in lst:
+            for i in range(current_page, pgno):
+                PgOb = obj.pages[i]
+                Text = PgOb.extract_text()
+                if re.search(S, Text):
+                    current_page = i
+                    return i
+        return current_page
+
+    obj = PyPDF2.PdfReader(file_name)
+    llmsherpa_api_url = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
+    pdf_url = file_name
+    pdf_reader = LayoutPDFReader(llmsherpa_api_url)
+    doc = pdf_reader.read_pdf(pdf_url)
+    current_page = 0
+
+    pgno = len(obj.pages)
+
+    sections = []
+    for section in doc.sections():
+        title = (remove_unicode(section.title)).strip()
+        text = remove_unicode(section.to_text(
+            include_children=True, recurse=True).strip())
+        if title != text and len(title) >= 10:
+            lines = [t.strip() for t in text.split("\n")[0:10]]
+            current_page = get_page_number(lines, current_page)
+            trimmed_text = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
+            sections.append(
+                {"title": title, "text": trimmed_text+" ...", "page": current_page+1})
+    return sections
+
+
+def generate_pdf_chunks(sections, base_url, page_title, type, user="unknown"):
+    chunks = []
+    for section in sections:
+        heading = section.get("title", "Untitled").strip()
+        cleaned_content = section.get("text", "text").strip()
+        link = base_url + f"#page={section.get('page')}"
+        chunk = DocumentChunk(
+            heading, f"{heading} of {page_title} :: {page_title} :: {cleaned_content}",
+            link, page_title)
+        chunks.append(chunk)
+    data = []
+    for chunk in chunks:
+        point = get_point(chunk.text, chunk.page_title,
+                          chunk.heading, chunk.url, type, base_url, user)
+        point["payload"]["accessibility"] = "public"
+        data.append(
+            point
+        )
+    return data
+
+
+def fetch_metadata_gdrive(doc_id, service):
+    print("Fetching metadata from google drive")
+    file_metadata = service.files().get(fileId=doc_id).execute()
+    print("Metadata fetched from google drive")
+    # permissions = service.files().get(
+    #     fileId=doc_id, fields="*,permissions").execute()
+    # print("Got permissions")
+    # publicly_accessible = False
+    # for permission in permissions.get('permissions', []):
+    #     if permission.get('type') == 'anyone' and permission.get('role') == 'reader':
+    #         publicly_accessible = True
+    # print(json.dumps(permissions, indent=4))
+    # print("permission", publicly_accessible)
+    return file_metadata
+
+
+def is_publicly_accessible_gdrive(doc_id):
+    # viewer_url = f'https://drive.google.com/file/d/{doc_id}'
+    # response = requests.get(viewer_url)
+    # print(response.url)
+    # if 'ServiceLogin' in response.url:
+    #     return "private"
+    # elif response.status_code == 200:
+    #     return "public"
+    # elif response.status_code == 404:
+    #     raise NotFoundException("Document not found. Invalid document link")
+    return "public"
+
+
+def download_pdf(service, doc_id):
+    request = service.files().get_media(fileId=doc_id)
+    fh = io.BytesIO()
+    downloader = io.BytesIO(request.execute())
+    fh.write(downloader.read())
+    pdf_file_name = f'pdf_downloads/{uuid.uuid4().hex}.pdf'
+    with open(pdf_file_name, 'wb') as f:
+        f.write(fh.getvalue())
+    print(f"{pdf_file_name} file downloaded successfully.")
+    return pdf_file_name
+
+
+def delete_pdf(file_name):
+    print(f"Deleting downloaded {file_name}")
+    if os.path.exists(file_name):
+        os.remove(file_name)
+
+
+def get_chunks_from_gdrive(url, credentials, user, page_title=""):
+    match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+    if match:
+        doc_id = match.group(1)
+        service = build('drive', 'v3', credentials=credentials)
+        meta_data = fetch_metadata_gdrive(
+            doc_id, service=service)
+
+        pdf_name = meta_data.get("name").replace(
+            "-", " ").replace(".", " ").replace("pdf", "PDF")
+
+        page_title = page_title if page_title != "" else pdf_name
+
+        doc_type = meta_data.get("mimeType")
+
+        print(page_title, doc_type, is_publicly_accessible_gdrive(doc_id=doc_id))
+        print("meta data extracted")
+
+        if doc_type != "application/pdf":
+            print("Generating chunk for unknown drive format")
+            point = get_point(page_title, page_title,
+                              page_title, url, "drive", url, user)
+            point["payload"]["accessibility"] = "public"
+            return [point]
+        else:
+            pdf_file_name = download_pdf(service=service, doc_id=doc_id)
+            pdf_sections = extract_pdf_sections(file_name=pdf_file_name)
+            delete_pdf(file_name=pdf_file_name)
+            return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="drive", user=user)
+    return []
+
+
 def get_chunks_batch(docs, credentials, user):
     print("Getting batch")
     try:
@@ -593,6 +734,10 @@ def get_chunks_batch(docs, credentials, user):
                     print("Getting chunks from github")
                     chunk = get_chunks_from_github(
                         doc["url"], user, page_title=doc["page_title"])
+                elif doc["type"] == "drive":
+                    print("Getting chunks from g-drive")
+                    chunk = get_chunks_from_gdrive(
+                        doc["url"], credentials=credentials, user=user, page_title=doc["page_title"])
                 elif doc["type"] == "unknown":
                     print("Generating chunk for unknown doc")
                     point = get_point(doc["page_title"], doc["page_title"],

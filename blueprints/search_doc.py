@@ -7,6 +7,8 @@ import os
 from flask_cors import CORS, cross_origin
 import json
 from utils.doc_instances import doc_search
+from utils.doc_info import is_valid_doc_type
+
 load_dotenv()
 
 search_doc = Blueprint('search_doc', __name__, url_prefix='/api/search')
@@ -36,9 +38,9 @@ def index():
                 raise BadRequestException("thresh must be float")
             thresh = data["thresh"]
         if "doc_filter" in data:
-            if data["doc_filter"] != "md" and data["doc_filter"] != "xlsx" and data["doc_filter"] != "gdoc" and data["doc_filter"] != "Any":
+            if not is_valid_doc_type(data["doc_filter"]):
                 raise BadRequestException(
-                    "doc_filter must be 'md' or 'gdoc' or 'Any'")
+                    "Unsupported doc_filter")
             doc_filter = data["doc_filter"]
         if "page_title_filter" in data:
             if (type(data["page_title_filter"])) != str:

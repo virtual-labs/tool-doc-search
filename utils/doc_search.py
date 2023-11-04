@@ -235,7 +235,7 @@ class DocumentSearch:
                     "document": hit.payload["page_title"],
                     "text": parsed_text,
                 })
-            print(json.dumps(search_results, indent=4))
+            # print(json.dumps(search_results, indent=4))
             print("Search Results for", page_title_filter,
                   search_query, len(search_results))
             return search_results

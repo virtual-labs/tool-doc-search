@@ -2707,6 +2707,24 @@ textarea.w-select {
   position: relative;
 }
 
+.file-type-drive {
+  color: #fff;
+  background-color: #cfa200;
+  border-radius: 10px;
+  flex: 0 auto;
+  order: 1;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 10px 0;
+  padding: 5px;
+  font-family: Open Sans, sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+  display: flex;
+  position: relative;
+}
+
+
 .file-type-org {
   color: #fff;
   background-color: rgb(66, 16, 116);

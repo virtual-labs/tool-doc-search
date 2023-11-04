@@ -3,26 +3,17 @@ import "./css/index.css";
 import "./css/App.css";
 import NavImg from "./media/download.png";
 import LoadingImg from "./media/loading-73.gif";
-import Table from "./Table";
-
-const default_section = {
-  accessibility: "public",
-  document: "Page title",
-  heading: "Section Heading",
-  text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere.",
-  type: "Github / Google Document",
-  url: "#",
-};
-
-const document_types = [{ type: "md" }, { type: "gdoc" }];
-
-const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
+import GoogleSheetStyleTable from "./components/GoogleSheetStyleTable";
+import {
+  default_section,
+  DOCUMENT_TYPES,
+  INSERT_DOC_URL,
+} from "./utils/config_data";
 
 const getResultText = (accessibility, text, type, present = false) => {
-  // alert(type);
   if (type === "xlsx" && present) {
     let data = JSON.parse(text);
-    return <Table data={data} />;
+    return <GoogleSheetStyleTable data={data} />;
   }
   if (accessibility === "private") {
     return "This is a private document.";
@@ -178,10 +169,9 @@ function App() {
                 value={query.doc_filter}
                 onChange={setQueryDocFilter}
               >
-                <option value="Any">Any</option>
-                <option value="md">md</option>
-                <option value="gdoc">gdoc</option>
-                <option value="xlsx">xlsx</option>
+                {DOCUMENT_TYPES.map((doc, i) => {
+                  return <option value={doc.type}>{doc.type}</option>;
+                })}
               </select>
             </form>
           </div>

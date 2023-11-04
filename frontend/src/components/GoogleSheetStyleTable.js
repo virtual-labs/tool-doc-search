@@ -1,6 +1,6 @@
 import React from "react";
-import "./css/index.css";
-import "./css/App.css";
+import "../css/index.css";
+import "../css/App.css";
 
 function parseData(data) {
   let cleanData = [];
