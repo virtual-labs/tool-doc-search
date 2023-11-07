@@ -231,6 +231,7 @@ class DocumentSearch:
                     "accessibility": hit.payload["accessibility"],
                     "type": hit.payload["type"],
                     "url": hit.payload["url"],
+                    "base_url": hit.payload["base_url"],
                     "score": hit.score,
                     "heading": hit.payload["heading"],
                     "document": hit.payload["page_title"],

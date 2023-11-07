@@ -571,15 +571,25 @@ def extract_pdf_sections(file_name):
         return re.sub(r'[^\x00-\x7F]', ' ', input_string)
 
     def get_page_number(lst, current_page=0):
-        print(current_page, pgno, len(lst))
         for s in lst:
             pattern = re.compile(re.escape(s), re.IGNORECASE)
             for i in range(current_page, pgno):
-                text = Text[i]
+                text = pageText[i]
                 if pattern.search(text):
                     current_page = i
                     return i
         return current_page
+
+    def is_valid_heading(heading, text):
+
+        filter1 = heading != text
+        filter2 = len(heading) >= 10
+        filter3 = "=" not in heading
+        filter4 = (heading[0] != '(' and heading[-1] != ')')
+
+        filters = [filter1, filter2, filter3, filter4]
+
+        return all(filters)
 
     llmsherpa_api_url = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
     pdf_url = file_name
@@ -595,15 +605,17 @@ def extract_pdf_sections(file_name):
     pages = obj.pages
     pgno = len(pages)
 
-    Text = [pages[i].extract_text() for i in range(0, pgno)]
+    pageText = [pages[i].extract_text() for i in range(0, pgno)]
 
     sections = []
     print("Started generating sections", len(doc.sections()))
-    for idx, section in enumerate(doc.sections()):
+    for _, section in enumerate(doc.sections()):
+
         title = (remove_unicode(section.title)).strip()
         text = remove_unicode(section.to_text(
             include_children=True, recurse=True).strip())
-        if (title != text) and (len(title) >= 10) and ("=" not in title):
+
+        if is_valid_heading(title, text):
             lines = [t.strip() for t in text.split("\n")[0:10]]
             current_page = get_page_number(lines[:4], current_page)
             trimmed_text = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
@@ -639,15 +651,24 @@ def fetch_metadata_gdrive(doc_id, service):
     print("Fetching metadata from google drive")
     file_metadata = service.files().get(fileId=doc_id).execute()
     print("Metadata fetched from google drive")
-    # permissions = service.files().get(
-    #     fileId=doc_id, fields="*,permissions").execute()
-    # print("Got permissions")
-    # publicly_accessible = False
-    # for permission in permissions.get('permissions', []):
-    #     if permission.get('type') == 'anyone' and permission.get('role') == 'reader':
-    #         publicly_accessible = True
-    # print(json.dumps(permissions, indent=4))
-    # print("permission", publicly_accessible)
+    # permissions = service.permissions().list(fileId=doc_id).execute()
+    # print(permissions)
+    # file = service.files().get(
+    #     fileId=doc_id, fields='id, name, shared, permissions').execute()
+
+    # if file.get('shared'):
+    #     permissions = file.get('permissions', [])
+    #     for p in permissions:
+    #         if p.get('type') == 'anyone' and p.get('role') == 'reader':
+    #             print(
+    #                 f"The file '{file['name']}' is viewable by anyone with the link.")
+    #             break
+    #     else:
+    #         print(
+    #             f"The file '{file['name']}' is not viewable by anyone with the link.")
+    # else:
+    #     print(f"The file '{file['name']}' is not shared publicly.")
+
     return file_metadata
 
 

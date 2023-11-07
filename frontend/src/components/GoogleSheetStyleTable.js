@@ -34,7 +34,7 @@ function parseData(data) {
   return finalData;
 }
 
-const GoogleSheetStyleTable = ({ data }) => {
+const GoogleSheetStyleTable = ({ data, url }) => {
   const finalData = parseData(data);
   return (
     <table className="google-sheet-table">
@@ -43,7 +43,7 @@ const GoogleSheetStyleTable = ({ data }) => {
           <tr key={rowIndex}>
             {row.map((cell, cellIndex) => (
               <td key={cellIndex}>
-                <input type="text" value={cell} />
+                <input type="text" value={cell} onChange={() => {}} />
               </td>
             ))}
           </tr>
@@ -51,7 +51,13 @@ const GoogleSheetStyleTable = ({ data }) => {
       </tbody>
       <tfoot>
         <tr className="extend-table-row">
-          <td className="extend-table-cell" colSpan="26">
+          <td
+            className="extend-table-cell"
+            colSpan="26"
+            onClick={() => {
+              window.open(url, "_blank");
+            }}
+          >
             ...
           </td>
         </tr>
