@@ -74,7 +74,7 @@ const documentTypeIdentifiers = {
     validate: validate_github,
     fetch_content: false,
   },
-  unknown: {
+  link: {
     page_title_req: true,
     validate: validate_url,
     fetch_content: false,

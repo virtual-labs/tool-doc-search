@@ -5,7 +5,7 @@ const ResultViewBox = ({ present }) => {
   const isDrivePDF = (doc) => {
     let slices = present.url.split("#");
     return (
-      present.type === "drive" && slices[slices.length - 1]?.startsWith("page=")
+      present.type === "pdf" && slices[slices.length - 1]?.startsWith("page=")
     );
   };
 

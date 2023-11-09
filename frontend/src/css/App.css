@@ -2596,40 +2596,9 @@ textarea.w-select {
   display: flex;
 }
 
-.accessibility-2-public {
-  color: #fff;
-  text-align: justify;
-  background-color: #9acb41;
-  border-radius: 10px;
-  justify-content: center;
-  align-self: flex-start;
-  align-items: center;
-  margin: 10px 10px 0 0;
-  margin-left: auto;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-}
 
-.file-type-md {
-  color: #fff;
-  text-align: justify;
-  background-color: #908f8f;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 
-}
+
 
 .result-page-title {
   color: #28bfa4;
@@ -2640,15 +2609,18 @@ textarea.w-select {
   color: #545454;
 }
 
-.accessibility-2-private {
+.result-box-tag-container {
+  right: 10px;
+}
+
+.accessibility-2 {
   color: #fff;
-  text-align: justify;
-  background-color: #ff5757;
+  background-color: #9acb41;
   border-radius: 10px;
   justify-content: center;
   align-self: flex-start;
   align-items: center;
-  margin: 10px 10px 0 0;
+  margin: 5px 5px 0 0;
   margin-left: auto;
   padding: 5px;
   font-family: Open Sans, sans-serif;
@@ -2656,107 +2628,60 @@ textarea.w-select {
   text-decoration: none;
 }
 
-.file-type-gdoc {
+.accessibility-2.public {
+  background-color: #9acb41;
+}
+
+.accessibility-2.private {
+  background-color: #ff5757;
+}
+
+.file-type {
   color: #fff;
+  background-color: #9acb41;
+  border-radius: 10px;
+  justify-content: center;
+  align-self: flex-start;
+  align-items: center;
+  margin: 5px 5px 0 0;
+  margin-left: auto;
+  padding: 5px;
+  font-family: Open Sans, sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.file-type.md {
+  background-color: #908f8f;
+}
+
+.file-type.gdoc {
   background-color: #2F99CD;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 }
 
-.file-type-github {
-  color: #fff;
+.file-type.github {
   background-color: #252525;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 }
 
-.file-type-unknown {
-  color: #fff;
+.file-type.link {
   background-color: #000000;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 }
 
-.file-type-drive {
-  color: #fff;
+.file-type.drive {
   background-color: #cfa200;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 }
 
 
-.file-type-org {
-  color: #fff;
+.file-type.org {
   background-color: rgb(66, 16, 116);
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
 }
 
-.file-type-xlsx {
-  color: #fff;
+.file-type.xlsx {
   background-color: #00bd4d;
-  border-radius: 10px;
-  flex: 0 auto;
-  order: 1;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 10px 0;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-  display: flex;
-  position: relative;
+}
+
+.file-type.pdf {
+  background-color: rgb(218, 21, 21);
 }
 
 @media screen and (max-width: 991px) {

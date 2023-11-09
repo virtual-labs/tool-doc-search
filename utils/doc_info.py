@@ -6,7 +6,8 @@ DOCUMENT_TYPES = [
     {"type": "xlsx"},
     {"type": "github"},
     {"type": "drive"},
-    {"type": "unknown"},
+    {"type": "link"},
+    {"type": "pdf"},
 ]
 
 
@@ -14,4 +15,4 @@ def is_valid_doc_type(doc_type):
     for dtype in DOCUMENT_TYPES:
         if dtype.get("type", None) == doc_type:
             return True
-    return False
+    return True

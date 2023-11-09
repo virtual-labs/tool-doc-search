@@ -156,7 +156,7 @@ def parse_page_markdown(page_md):
 ###############################################################################################
 
 
-def get_payload(page_title, heading, text, url, type, base_url, user):
+def get_payload(page_title, heading, text, url, type, base_url, user, src="web"):
     return {
         "page_title": page_title.strip(),
         "heading": heading.strip(),
@@ -164,13 +164,14 @@ def get_payload(page_title, heading, text, url, type, base_url, user):
         "url": url.strip(),
         "type": type.strip(),
         "base_url": base_url.strip(),
+        "src": src.strip()
     }
 
 
-def get_point(text, page_title, heading, url, type, base_url, user):
+def get_point(text, page_title, heading, url, type, base_url, user, src="web"):
     return {
         "content": text.strip(),
-        "payload": get_payload(page_title, heading, text, url, type, base_url, user)
+        "payload": get_payload(page_title, heading, text, url, type, base_url, user, src)
     }
 
 
@@ -256,7 +257,8 @@ def get_chunks_from_sheet(worksheet_data, url, type, user, page_title):
     for chunk in chunks:
         data.append(
             get_point(chunk.text, chunk.page_title,
-                      chunk.heading, chunk.url, type, url, user)
+                      chunk.heading, chunk.url, type, url, user,
+                      src="drive")
         )
     return data
 
@@ -270,6 +272,7 @@ def get_chunks_from_xlsx(url, credentials, user, page_title=""):
     print(f"Accessiblility of {url} is {accessibility}")
     if match:
         doc_id = match.group(1)
+        # print(get_google_permissions(doc_id, credentials))
         print(f"Fetching google sheet {url}")
         spreadsheet_title, worksheets = fetch_google_sheet_private(
             doc_id, credentials, user, page_title)
@@ -415,7 +418,7 @@ def generate_document_chunks(sections, base_url, page_title, type):
     return chunks
 
 
-def get_chunks_from_markdown(markdown_content, url, type, user, page_title=""):
+def get_chunks_from_markdown(markdown_content, url, type, user, page_title="", src="web"):
     print("Extracting headings from markdown")
     markdown_content = parse_page_markdown(markdown_content)
 
@@ -429,7 +432,7 @@ def get_chunks_from_markdown(markdown_content, url, type, user, page_title=""):
     for chunk in chunks:
         data.append(
             get_point(chunk.text, chunk.page_title,
-                      chunk.heading, chunk.url, type, url, user)
+                      chunk.heading, chunk.url, type, url, user, src)
         )
     return data
 
@@ -458,7 +461,7 @@ def get_chunks_from_org(org_content, url, type, user, page_title=""):
     for chunk in chunks:
         data.append(
             get_point(chunk.text, chunk.page_title,
-                      chunk.heading, chunk.url, type, url, user)
+                      chunk.heading, chunk.url, type, url, user, src="github")
         )
     return data
 
@@ -473,7 +476,7 @@ def get_chunks_from_md_github(url, user, page_title=""):
     markdown_content = fetch_content_from_github(github_raw_url)
     print(f"Markdown fetched from {github_raw_url}")
     data = get_chunks_from_markdown(
-        markdown_content, url, "md", user, page_title)
+        markdown_content, url, "md", user, page_title, src="github")
     newdata = []
     for chunk in data:
         chunk["payload"]["accessibility"] = "public"
@@ -512,7 +515,7 @@ def get_chunks_from_github(url, user, page_title=""):
     data = []
     data.append(
         get_point(content, page_title,
-                  page_title, url, "github", url, user)
+                  page_title, url, "github", url, user, src="github")
     )
     for chunk in data:
         chunk["payload"]["accessibility"] = "public"
@@ -549,7 +552,7 @@ def get_chunks_from_gdoc(url, credentials, user, page_title=""):
             markdown_content = fetch_google_doc_private(doc_id, credentials)
         print(f"Markdown fetched from google doc {url}")
         data = get_chunks_from_markdown(
-            markdown_content, url, "gdoc", user, page_title)
+            markdown_content, url, "gdoc", user, page_title, src="drive")
 
         newdata = []
         for d in data:
@@ -639,12 +642,32 @@ def generate_pdf_chunks(sections, base_url, page_title, type, user="unknown"):
     data = []
     for chunk in chunks:
         point = get_point(chunk.text, chunk.page_title,
-                          chunk.heading, chunk.url, type, base_url, user)
+                          chunk.heading, chunk.url, type, base_url, user, src="drive")
         point["payload"]["accessibility"] = "public"
         data.append(
             point
         )
     return data
+
+
+def get_google_permissions(doc_id, credentials):
+    service = build('drive', 'v3', credentials=credentials)
+    permission_id = 'anyoneWithLink'
+    permissions = service.permissions().get(
+        fileId=doc_id, permissionId=permission_id).execute()
+
+    print(json.dumps(permissions, indent=4))
+    file = service.files().get(
+        fileId=doc_id, fields='id, name, shared, permissions').execute()
+    if file.get('shared'):
+        permissions = file.get('permissions', [])
+        for p in permissions:
+            if p.get('type') == 'anyone' and (p.get('role') == 'reader' or p.get('role') == 'writer'):
+                return "public"
+        else:
+            return "private"
+    else:
+        return "private"
 
 
 def fetch_metadata_gdrive(doc_id, service):
@@ -707,9 +730,18 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
     if match:
         doc_id = match.group(1)
+        # service = build('drive', 'v3', credentials=credentials)
+        # SCOPES = ['https://www.googleapis.com/auth/drive']
+        # SERVICE_ACCOUNT_FILE = os.path.join(
+        #     pathlib.Path(__file__).parent, "g-sheet-secret.json")
+        # credentials = None
+        # credentials = service_account.Credentials.from_service_account_file(
+        #     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
         service = build('drive', 'v3', credentials=credentials)
         meta_data = fetch_metadata_gdrive(
             doc_id, service=service)
+        # get_google_permissions(doc_id, credentials)
 
         pdf_name = meta_data.get("name").replace(
             "-", " ").replace(".", " ").replace("pdf", "PDF")
@@ -722,16 +754,18 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
         print("meta data extracted")
 
         if doc_type != "application/pdf":
+
             print("Generating chunk for unknown drive format")
+            new_doc_type = doc_type.split('/')[1]
             point = get_point(page_title, page_title,
-                              page_title, url, "drive", url, user)
+                              page_title, url, new_doc_type, url, user, src="drive")
             point["payload"]["accessibility"] = "public"
             return [point]
         else:
             pdf_file_name = download_pdf(service=service, doc_id=doc_id)
             pdf_sections = extract_pdf_sections(file_name=pdf_file_name)
             delete_pdf(file_name=pdf_file_name)
-            return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="drive", user=user)
+            return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="pdf", user=user)
     return []
 
 
@@ -749,43 +783,56 @@ def get_chunks_batch(docs, credentials, user):
                     print("Getting chunks from github")
                     chunk = get_chunks_from_md_github(
                         doc["url"], user, page_title=doc["page_title"])
+
                 elif doc["type"] == "gdoc":
                     print("Getting chunks from google doc")
                     chunk = get_chunks_from_gdoc(
                         doc["url"], credentials, user, page_title=doc["page_title"])
+
                 elif doc["type"] == "xlsx":
                     print("Getting chunks from google sheets")
                     chunk = get_chunks_from_xlsx(
                         doc["url"], credentials, user, page_title=doc["page_title"])
+
                 elif doc["type"] == "org":
                     print("Getting chunks from github")
                     chunk = get_chunks_from_org_github(
                         doc["url"], user, page_title=doc["page_title"])
+
                 elif doc["type"] == "github":
                     print("Getting chunks from github")
                     chunk = get_chunks_from_github(
                         doc["url"], user, page_title=doc["page_title"])
-                elif doc["type"] == "drive":
+
+                elif doc["type"] == "drive" or doc["url"].startswith("https://drive.google.com/file/d/"):
                     print("Getting chunks from g-drive")
                     chunk = get_chunks_from_gdrive(
                         doc["url"], credentials=credentials, user=user, page_title=doc["page_title"])
-                elif doc["type"] == "unknown":
+
+                elif doc["type"] == "link":
                     print("Generating chunk for unknown doc")
                     point = get_point(doc["page_title"], doc["page_title"],
-                                      doc["page_title"], doc["url"], "unknown", doc["url"], user)
+                                      doc["page_title"], doc["url"], "link", doc["url"], user)
                     point["payload"]["accessibility"] = "public"
                     chunk = [point]
+
                 if (len(chunk) == 0):
                     raise Exception(
                         f"No headings found while parsing document {idx+1}")
+
                 for ch in chunk:
                     chunks.append(ch)
+
                 base_urls.append(doc["url"])
+
             except Exception as e:
                 raise Exception(
                     f"Error occurred while parsing document {idx+1}, {str(e)}")
+
         print(f"Total document chunks generated {len(chunks)}")
+
         return chunks, base_urls
+
     except Exception as e:
         raise e
 

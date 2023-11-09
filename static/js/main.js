@@ -119,13 +119,22 @@ document.getElementById("postButton").addEventListener("click", function () {
       var typeCell = row.cells[2];
       var documentURL = documentCell.querySelector("a").getAttribute("href");
       var documentType = typeCell.textContent;
+      let pt_valid =
+        !documentTypeIdentifiers[documentType] ||
+        documentTypeIdentifiers[documentType].page_title_req;
+      // alert(pt_valid);
       selectedURLs.push({
         url: documentURL,
         type: documentType,
-        page_title: documentTypeIdentifiers[documentType].page_title_req
-          ? documentCell.querySelector("a").text
-          : "",
+        page_title: pt_valid ? documentCell.querySelector("a").text : "",
       });
+      // alert(
+      //   JSON.stringify({
+      //     url: documentURL,
+      //     type: documentType,
+      //     page_title: pt_valid ? documentCell.querySelector("a").text : "",
+      //   })
+      // );
     }
   });
   if (selectedURLs.length > 0) {
@@ -145,7 +154,9 @@ document.getElementById("postButton").addEventListener("click", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert("Documents updated successfully.");
+      if (data["error"]) {
+        alert(data["error"] + " " + data["message"]);
+      } else alert("Documents updated successfully.");
     })
     .catch((error) => {
       alert("Error:", error);

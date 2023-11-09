@@ -149,8 +149,12 @@ input[type="submit"]:active {
   background-color: #cfa200;
 }
 
-.doctype-label.unknown {
+.doctype-label.link {
   background-color: rgb(0, 0, 0);
+}
+
+.doctype-label.pdf {
+  background-color: rgb(218, 21, 21);
 }
 
 .result-msg {

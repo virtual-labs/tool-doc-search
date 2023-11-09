@@ -66,7 +66,7 @@ class DocumentSearch:
         try:
             print("Getting document chunks for batch request from user :", user)
             data, base_urls = get_chunks_batch(docs, credentials, user)
-            print(json.dumps(data, indent=4))
+            # print(json.dumps(data, indent=4))
             # print(len(data))
             # return []
             if len(data):
@@ -235,6 +235,7 @@ class DocumentSearch:
                     "score": hit.score,
                     "heading": hit.payload["heading"],
                     "document": hit.payload["page_title"],
+                    "src": hit.payload["src"],
                     "text": parsed_text,
                 })
             # print(json.dumps(search_results, indent=4))

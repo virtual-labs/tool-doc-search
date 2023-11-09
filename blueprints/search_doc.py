@@ -24,41 +24,48 @@ def index():
 
         if "search_query" not in data:
             raise BadRequestException("Please enter search query")
+
         if (type(data["search_query"])) != str:
             raise BadRequestException("search query must be string")
+
         if "limit" in data:
             if (type(data["limit"])) != int:
                 return BadRequestException("limit must be integer")
             limit = data["limit"]
+
         if "thresh" in data:
             if (type(data["thresh"])) != float:
                 raise BadRequestException("thresh must be float")
             thresh = data["thresh"]
+
         if "doc_filter" in data:
-            if not is_valid_doc_type(data["doc_filter"]):
-                raise BadRequestException(
-                    "Unsupported doc_filter")
+            # if not is_valid_doc_type(data["doc_filter"]):
+            #     raise BadRequestException(
+            #         "Unsupported doc_filter")
             doc_filter = data["doc_filter"]
+
         if "page_title_filter" in data:
             if (type(data["page_title_filter"])) != str:
                 raise BadRequestException("page_title_filter  must be string")
             page_title_filter = data["page_title_filter"]
+
         print(json.dumps(data, indent=4))
+
         result = doc_search.get_search_result(
             search_query=data["search_query"],
             limit=limit,
             thresh=thresh,
             doc_filter=doc_filter,
             page_title_filter=page_title_filter,)
-        # print(json.dumps(result, indent=4))
+
         response = jsonify({"hits": len(result), "result": result})
+
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Methods',
                              'DELETE, POST, GET, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers',
                              'Content-Type, Authorization, X-Requested-With')
 
-        # "Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS"
         return response
 
     except CustomException as e:

@@ -4,6 +4,7 @@ import {
   DOCUMENT_TYPES,
   DEFAULT_QUERY,
   DEFAULT_SECTION,
+  SEARCH_API,
 } from "../utils/config_data";
 import { getResultText } from "../utils/utils";
 import LoadingImg from "../media/loading-73.gif";
@@ -23,7 +24,7 @@ const SearchBox = ({ setPresent }) => {
       return;
     }
 
-    const url = "http://127.0.0.1:5000/api/search";
+    const url = SEARCH_API;
     try {
       const config = {
         method: "POST",
@@ -47,6 +48,7 @@ const SearchBox = ({ setPresent }) => {
       setLoading(false);
     }
   };
+
   const setQueryText = (e) => {
     setQuery({ ...query, search_query: e.target.value });
   };
@@ -143,18 +145,20 @@ const ResultBox = ({ result, setPresent }) => {
   };
   return (
     <div className="result-box" onClick={() => showResult(result)}>
-      <div className="result-heading">
-        <h3 className="heading">{result.heading}</h3>
-
-        <div className={`file-type-${result.type}`}>{result.type}</div>
-        <div
-          className={
-            result.accessibility === "public"
-              ? "accessibility-2-public"
-              : "accessibility-2-private"
-          }
-        >
-          {result.accessibility}
+      <div className="result-heading flex flex-row">
+        <h3 className="heading flex-1">{result.heading}</h3>
+        <div className="flex flex-row result-box-tag-container">
+          <div className={`file-type ${result.type}`}>{result.type}</div>
+          <div className={`file-type ${result.src}`}>{result.src}</div>
+          <div
+            className={
+              result.accessibility === "public"
+                ? "accessibility-2 public"
+                : "accessibility-2 private"
+            }
+          >
+            {result.accessibility}
+          </div>
         </div>
       </div>
       <div className="result-page-title">{result.document}</div>

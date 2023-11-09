@@ -24,9 +24,17 @@ const DOCUMENT_TYPES = [
   { type: "xlsx", title: "Google Sheet" },
   { type: "github", title: "Github File" },
   { type: "drive", title: "Google Drive File" },
-  { type: "unknown", title: "Unknown Type" },
+  { type: "link", title: "Link" },
+  { type: "pdf", title: "PDF file" },
 ];
 
 const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
+const SEARCH_API = "http://127.0.0.1:5000/api/search";
 
-export { DEFAULT_SECTION, DOCUMENT_TYPES, INSERT_DOC_URL, DEFAULT_QUERY };
+export {
+  DEFAULT_SECTION,
+  DOCUMENT_TYPES,
+  INSERT_DOC_URL,
+  DEFAULT_QUERY,
+  SEARCH_API,
+};
