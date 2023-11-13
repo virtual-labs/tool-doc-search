@@ -18,7 +18,7 @@ This document serves as a comprehensive guide to the Virtual Labs Document Searc
 - [Document Insertion into Qdrant Vector Database](#document-insertion-into-qdrant-vector-database)
   - Markdown File
   - Google Document File
-- [Determining Google Document Accessibility](#determining-google-document-accessibility)
+- [Determining Document Accessibility](#determining-document-accessibility)
   - [Permissions and Scopes](#permissions-and-scopes)
   - [Process of Accessibility Determination](#process-of-accessibility-determination)
 - [Technology Stack](#technology-stack)
@@ -35,7 +35,21 @@ In a dynamic virtual labs ecosystem, the extensive volume of documents poses a s
 
 ## Supported Document Types
 
-The tool currently supports Markdown and Google Docs as the primary document types. It supports both private and public documents for Google Documents but only public documents for Markdown. Context of public and private is explained in [this](#determining-google-document-accessibility) section. It's important to note that documents should follow specific formatting guidelines to ensure accurate segregation of relevant sections and effective searchability.
+Following document formats are supported in Document Search tool.
+| Serial No | Document Type | Format | URL Template | Accessibility |
+| --------- | ------------- | ------ | ------------ | -------------- |
+| 1 | Github Markdown | md | https://github.com/<\_ORGANISATION_NAME>/<\_REPO_NAME>/blob/<\_BRANCH>/PATH/TO/DOCUMENT.md <br/> https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/user-doc.md | public/private |
+| 2 | Google Document | gdoc | https://docs.google.com/document/d/<\_DOC_ID> <br/> https://docs.google.com/document/d/1ye4X5LcUlicv4Q-VE7pxYrjW8yj0Uep6EO3gZpR4SDw | public/private |
+| 3 | Google Spreadsheet | xlsx | https://docs.google.com/spreadsheets/d/<\_DOC_ID> <br> https://docs.google.com/spreadsheets/d/1SUOs97mV0MUgad0shGq2Kfpl24RHyvSjtbzR4VrrRjM | public/private |
+| 4 | Google Drive PDF | pdf | https://drive.google.com/file/d/<\_DOC_ID> <br/> https://drive.google.com/file/d/1kuPsaiC_3oDOrR8TWc4OGGzaapKaw1Qw | public/private |
+| 5 | Github ORG mode | org | https://github.com/<\_ORGANISATION_NAME>/<\_REPO_NAME>/blob/<\_BRANCH>/PATH/TO/DOCUMENT.org <br/> https://github.com/virtual-labs/ph3-lab-mgmt/blob/master/docs/lab-build-process.org | public/private |
+| 6 | Github File | - | https://github.com/<\_ORGANISATION_NAME>/<\_REPO_NAME>/blob/<\_BRANCH>/PATH/TO/file.extension <br/> https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/user-doc.md | public/private |
+| 7* | Drive File | - | https://drive.google.com/file/d/<\_DOC_ID> <br/> https://drive.google.com/file/d/1kuPsaiC_3oDOrR8TWc4OGGzaapKaw1Qw | public/private |
+| 8* | Link | - | Any URL | - |
+
+Context of public and private is explained in [this](#determining-document-accessibility) section. It's important to note that documents should follow specific formatting guidelines to ensure accurate segregation of relevant sections and effective searchability.
+
+\* - These document/links are not supported in current version of Document Search tool. They will be stored as Page title and URL provided by user.
 
 ## Document Processing and Indexing
 
@@ -112,12 +126,6 @@ The second type of user is responsible for adding documents to the database. Thi
 
 5. **Upsert Documents**: Users can insert new documents via the "Upsert documents" button. This action opens a modal pane that contains a select box. Users can choose the number of documents they wish to insert from the available options (1 to 10). For each selected number, a corresponding number of URL input boxes is generated. Users should paste the URLs of the documents they want to add and click the submit button.
 
-**URL format**
-
-- Google Doc: https://docs.google.com/document/d/1ye4X5LcUlicv4Q-VE7pxYrjW8yj0Uep6EO3gZpR4SDw (https://docs.google.com/document/d/<DOC_ID>)
-
-- Markdown Document: https://github.com/virtual-labs/app-exp-create-web/blob/master/docs/user-doc.md (https://github.com/<ORGANISATION_NAME>/<REPO_NAME>/blob/<BRANCH>/PATH/TO/DOCUMENT.md)
-
 ### Latency Numbers
 
 The Document Search Tool processes the insertion of documents with varying latencies. For 8 documents, it approximately takes around 25-30 seconds to complete the upsert operation. This may vary with content size for different batches of documents. For delete operation it is 2-3 seconds.
@@ -144,6 +152,7 @@ For Markdown files, the following steps are undertaken:
    - "heading": The section heading.
    - "text": The content inside that section.
    - "url": The URL for that section.
+   - "src": Document source i.e Drive, GitHub or Web.
    - "accessibility": Indicates whether the document is public or private (for Markdown files, it is typically public as only public documents are allowed for Markdown).
    - "type": Indicates whether it's a Markdown document (md) or a Google Document (gdoc).
    - "base_url": The URL of the entire document.
@@ -155,7 +164,7 @@ For Markdown files, the following steps are undertaken:
 
 **Google Document File**
 
-For Google Document files (both [public and private](#determining-google-document-accessibility)), the following steps are executed:
+For Google Document files (both [public and private](#determining-document-accessibility)), the following steps are executed:
 
 1. **Fetching as HTML**: Google Documents are fetched as HTML files.
 
@@ -167,9 +176,43 @@ For Google Document files (both [public and private](#determining-google-documen
 
 This process ensures that documents, whether in Markdown or Google Docs format, are effectively segmented, encoded, and stored in the Qdrant vector database for efficient and accurate retrieval.
 
-### Determining Google Document Accessibility
+**Google Sheets**
 
-The Document Search Tool employs a mechanism to distinguish between public and private Google Documents. This determination is made through a systematic process using the Google credentials of the logged-in user, along with specific permissions and scopes.
+For Google Sheets (both [public and private](#determining-document-accessibility)), the following steps are executed:
+
+1. **Fetching**: Google Sheets are fetched using python library `gspread`.
+
+2. **Document Chunk Formation**: Each worksheet is treated as a section. Each section will contain upto first 10 rows X 26 columns of that particular worksheet.
+
+3. **Follow Markdown File Procedure**: The same procedure is applied to this generated content as outlined in the "Markdown File" section Pt. 3 above.
+
+**ORG mode**
+
+For GitHub ORG mode (both [public and private](#determining-document-accessibility)), the following steps are executed:
+
+1. **Fetching and Parsing ORG Code**: The tool fetches the ORG mode code and parses it.
+
+2. **Document Chunk Formation**: The tool creates document chunks by breaking down the document into sections. This segmentation is based on heading identifiers (e.g., \*, \*\*, ...) and includes all the text below each heading until the next heading is encountered.
+
+3. **Follow Markdown File Procedure**: The same procedure is applied to this generated content as outlined in the "Markdown File" section Pt. 3 above.
+
+**Google Drive PDF**
+
+For Google Drive PDF (both [public and private](#determining-document-accessibility)), the following steps are executed:
+
+1. **Fetching**: PDF file from google drive are fetched. PDF file is downloaded on local disk.
+
+2. **Document Chunk Formation**: Document chunks are formed using [llmsherpa](https://github.com/nlmatics/llmsherpa) library.
+
+3. **Follow Markdown File Procedure**: The same procedure is applied to this generated content as outlined in the "Markdown File" section Pt. 3 above.
+
+### Determining Document Accessibility
+
+The Document Search Tool employs a mechanism to distinguish between public and private Documents. This determination is made through a systematic process using the Google/Github credentials of the Virtual Labs credentials stored in backend, along with specific permissions and scopes.
+
+- **Github** - The tool first tries to fetch github document without any Personal Access token, If the file is successfully retrieved, it is considered as "public" and if not the tool utilizes the Github Personal Access Token of the Virtual Labs account to fetch the GitHub file from the Github repository. If the file is successfully retrieved, it is considered as "private" else 404 error.
+
+- **Google Drive/Doc/Sheet** - ......
 
 ### Permissions and Scopes
 
@@ -207,3 +250,7 @@ By implementing this process, the Document Search Tool effectively distinguishes
 ## Future Updates and Features
 
 - Current implementation of Page Title search is sub-word based. It can be improved by using a same semantic search model as used for section search.
+
+- Optimize search query by Binary Quantization https://qdrant.tech/articles/binary-quantization/
+
+- Modify embedding template for better semantic by placing all subheadings ahead of text.
