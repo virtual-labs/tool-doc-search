@@ -16,8 +16,6 @@ This document serves as a comprehensive guide to the Virtual Labs Document Searc
 - [How the Document Search Tool Works](#how-the-document-search-tool-works)
   - [Latency Numbers](#latency-numbers)
 - [Document Insertion into Qdrant Vector Database](#document-insertion-into-qdrant-vector-database)
-  - Markdown File
-  - Google Document File
 - [Determining Document Accessibility](#determining-document-accessibility)
   - [Permissions and Scopes](#permissions-and-scopes)
   - [Process of Accessibility Determination](#process-of-accessibility-determination)
