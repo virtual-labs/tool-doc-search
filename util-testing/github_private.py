@@ -1,10 +1,10 @@
 import requests
 
-username = 'chir263'
-repository = 'repo-template'
+username = 'virtual-labs'
+repository = 'exp-microscopy-iitk'
 file_path = 'README.md'
 
-access_token = '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'
+access_token = '#'
 
 raw_url = f'https://raw.githubusercontent.com/{username}/{repository}/master/{file_path}'
 
