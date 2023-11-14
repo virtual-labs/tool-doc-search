@@ -36,6 +36,9 @@ const ResultViewBox = ({ present }) => {
           <span className={`accessibility-view-box ${present.accessibility}`}>
             {present.accessibility}
           </span>
+          <span className={`doctype-view-box ${present.type}`}>
+            {present.type}
+          </span>
         </h1>
 
         <h3 className="section-heading">

@@ -46,7 +46,7 @@ class DocumentSearch:
         return batches
 
     def upsert_batchs(self, ids, payloads, vectors):
-        batch_size = 40
+        batch_size = 25
         ids = self.batched(ids, batch_size)
         payloads = self.batched(payloads, batch_size)
         vectors = self.batched(vectors, batch_size)

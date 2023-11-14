@@ -2636,53 +2636,7 @@ textarea.w-select {
   background-color: #ff5757;
 }
 
-.file-type {
-  color: #fff;
-  background-color: #9acb41;
-  border-radius: 10px;
-  justify-content: center;
-  align-self: flex-start;
-  align-items: center;
-  margin: 5px 5px 0 0;
-  margin-left: auto;
-  padding: 5px;
-  font-family: Open Sans, sans-serif;
-  font-size: 12px;
-  text-decoration: none;
-}
 
-.file-type.md {
-  background-color: #908f8f;
-}
-
-.file-type.gdoc {
-  background-color: #2F99CD;
-}
-
-.file-type.github {
-  background-color: #252525;
-}
-
-.file-type.link {
-  background-color: #000000;
-}
-
-.file-type.drive {
-  background-color: #cfa200;
-}
-
-
-.file-type.org {
-  background-color: rgb(66, 16, 116);
-}
-
-.file-type.xlsx {
-  background-color: #00bd4d;
-}
-
-.file-type.pdf {
-  background-color: rgb(218, 21, 21);
-}
 
 @media screen and (max-width: 991px) {
   .nav-menu-wrapper {
@@ -2863,6 +2817,8 @@ textarea.w-select {
   border-radius: 5px;
 }
 
+
+
 .accessibility-view-box {
   font-size: 12px;
   font-weight: 600;
@@ -2879,7 +2835,7 @@ textarea.w-select {
 }
 
 .view-box-link {
-  cursor: default;
+  cursor: pointer;
 }
 
 .view-box-link:hover {
@@ -2888,4 +2844,72 @@ textarea.w-select {
 
 .view-box-link:active {
   color: #007366;
+}
+
+.doctype-view-box {
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: super;
+  margin: 10px;
+  margin-left: 0;
+  color: #fff;
+  background-color: #484847;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.file-type {
+  color: #fff;
+  background-color: #9acb41;
+  border-radius: 10px;
+  justify-content: center;
+  align-self: flex-start;
+  align-items: center;
+  margin: 5px 5px 0 0;
+  margin-left: auto;
+  padding: 5px;
+  font-family: Open Sans, sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.file-type.md,
+.doctype-view-box.md {
+  background-color: #908f8f;
+}
+
+.file-type.gdoc,
+.doctype-view-box.gdoc {
+  background-color: #2F99CD;
+}
+
+.file-type.github,
+.doctype-view-box.github {
+  background-color: #252525;
+}
+
+.file-type.link,
+.doctype-view-box.link {
+  background-color: #000000;
+}
+
+.file-type.drive,
+.doctype-view-box.drive {
+  background-color: #cfa200;
+}
+
+
+.file-type.org,
+.doctype-view-box.org {
+  background-color: #5fb09b;
+}
+
+.file-type.xlsx,
+.doctype-view-box.xlsx {
+  background-color: #00bd4d;
+}
+
+.file-type.pdf,
+.doctype-view-box.pdf {
+  background-color: rgb(218, 21, 21);
 }

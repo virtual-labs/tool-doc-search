@@ -252,3 +252,5 @@ By implementing this process, the Document Search Tool effectively distinguishes
 - Optimize search query by Binary Quantization https://qdrant.tech/articles/binary-quantization/
 
 - Modify embedding template for better semantic by placing all subheadings ahead of text.
+
+- Add theme feature to search and insert page.

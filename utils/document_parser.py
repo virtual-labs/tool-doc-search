@@ -202,25 +202,9 @@ def fetch_google_doc_private(doc_id, credentials):
     return convert_to_markdown(response.decode('utf-8'))
 
 
-def fetch_google_sheet(doc_id):
-    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
-    response = requests.get(url)
-    if response.status_code == 404:
-        raise NotFoundException("Document not found. Invalid document link")
-    print(f"Fetching markdown from google doc with id {doc_id}")
-    return convert_to_markdown(response.content)
-
-
 def fetch_google_sheet_private(doc_id, credentials, user, page_title=""):
     print("Strated extracting")
-    GSHEET_SECRET = json.load(open(os.path.join(
-        pathlib.Path(__file__).parent, "g-sheet-secret.json")))
-    credentials = service_account.Credentials.from_service_account_info(
-        GSHEET_SECRET)
-    scope = ['https://www.googleapis.com/auth/spreadsheets.readonly',
-             'https://www.googleapis.com/auth/drive.readonly']
-    creds_with_scope = credentials.with_scopes(scope)
-    client = gspread.authorize(creds_with_scope)
+    client = gspread.authorize(credentials)
     print("gspread authorized")
     spreadsheet = client.open_by_url(
         f'https://docs.google.com/spreadsheets/d/{doc_id}/edit#gid=0')
@@ -268,11 +252,11 @@ def get_chunks_from_xlsx(url, credentials, user, page_title=""):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
     print(f"Getting accessiblility of {url} ")
-    accessibility = "private"
-    print(f"Accessiblility of {url} is {accessibility}")
     if match:
         doc_id = match.group(1)
-        # print(get_google_permissions(doc_id, credentials))
+        meta_data = fetch_metadata_gdrive(doc_id)
+        accessibility = meta_data.get("accessibility")
+        print(f"Accessiblility of {url} is {accessibility}")
         print(f"Fetching google sheet {url}")
         spreadsheet_title, worksheets = fetch_google_sheet_private(
             doc_id, credentials, user, page_title)
@@ -514,7 +498,7 @@ def get_chunks_from_github(url, user, page_title=""):
     newdata = []
     data = []
     data.append(
-        get_point(content, page_title,
+        get_point(page_title+"::"+page_title+"::"+content, page_title,
                   page_title, url, "github", url, user, src="github")
     )
     for chunk in data:
@@ -524,15 +508,9 @@ def get_chunks_from_github(url, user, page_title=""):
 
 
 def get_gdoc_accessiblility(link, document_id=""):
-    viewer_url = f'https://docs.google.com/document/d/{document_id}/export?format=html'
-    response = requests.get(link)
-    if 'ServiceLogin' in response.url:
-        return "private"
-    elif response.status_code == 200:
-        return "public"
-    elif response.status_code == 404:
-        raise NotFoundException("Document not found. Invalid document link")
-    return None
+    meta_data = fetch_metadata_gdrive(document_id)
+    accessibility = meta_data.get("accessibility")
+    return accessibility
 
 
 def get_chunks_from_gdoc(url, credentials, user, page_title=""):
@@ -540,10 +518,10 @@ def get_chunks_from_gdoc(url, credentials, user, page_title=""):
         url = url[:-1]
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
     print(f"Getting accessiblility of {url} ")
-    accessibility = get_gdoc_accessiblility(url)
-    print(f"Accessiblility of {url} is {accessibility}")
     if match:
         doc_id = match.group(1)
+        accessibility = get_gdoc_accessiblility(document_id=doc_id, link=url)
+        print(f"Accessiblility of {url} is {accessibility}")
         markdown_content = ""
         print(f"Fetching google doc {url}")
         if accessibility == "public":
@@ -629,7 +607,7 @@ def extract_pdf_sections(file_name):
     return sections
 
 
-def generate_pdf_chunks(sections, base_url, page_title, type, user="unknown"):
+def generate_pdf_chunks(sections, base_url, page_title, type, user="unknown", accessibility="public"):
     chunks = []
     for section in sections:
         heading = section.get("title", "Untitled").strip()
@@ -643,7 +621,7 @@ def generate_pdf_chunks(sections, base_url, page_title, type, user="unknown"):
     for chunk in chunks:
         point = get_point(chunk.text, chunk.page_title,
                           chunk.heading, chunk.url, type, base_url, user, src="drive")
-        point["payload"]["accessibility"] = "public"
+        point["payload"]["accessibility"] = accessibility
         data.append(
             point
         )
@@ -670,42 +648,35 @@ def get_google_permissions(doc_id, credentials):
         return "private"
 
 
-def fetch_metadata_gdrive(doc_id, service):
+def fetch_metadata_gdrive(doc_id):
     print("Fetching metadata from google drive")
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    SERVICE_ACCOUNT_FILE = os.path.join(
+        pathlib.Path(__file__).parent, "../secrets/service-account-secret.json")
+    credentials = None
+    credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+    service = build('drive', 'v3', credentials=credentials)
+
     file_metadata = service.files().get(fileId=doc_id).execute()
+
+    try:
+        print(doc_id)
+        permissions = service.permissions().get(
+            fileId=doc_id, permissionId="anyoneWithLink").execute()
+        print(json.dumps(permissions, indent=4))
+        if permissions.get("role") in ["reader", "writer", "editor", "viewer"]:
+            file_metadata["accessibility"] = "public"
+        else:
+            file_metadata["accessibility"] = "private"
+    except Exception as e:
+        print(e)
+        file_metadata["accessibility"] = "private"
+
     print("Metadata fetched from google drive")
-    # permissions = service.permissions().list(fileId=doc_id).execute()
-    # print(permissions)
-    # file = service.files().get(
-    #     fileId=doc_id, fields='id, name, shared, permissions').execute()
-
-    # if file.get('shared'):
-    #     permissions = file.get('permissions', [])
-    #     for p in permissions:
-    #         if p.get('type') == 'anyone' and p.get('role') == 'reader':
-    #             print(
-    #                 f"The file '{file['name']}' is viewable by anyone with the link.")
-    #             break
-    #     else:
-    #         print(
-    #             f"The file '{file['name']}' is not viewable by anyone with the link.")
-    # else:
-    #     print(f"The file '{file['name']}' is not shared publicly.")
-
+    print(json.dumps(file_metadata, indent=4))
     return file_metadata
-
-
-def is_publicly_accessible_gdrive(doc_id):
-    # viewer_url = f'https://drive.google.com/file/d/{doc_id}'
-    # response = requests.get(viewer_url)
-    # print(response.url)
-    # if 'ServiceLogin' in response.url:
-    #     return "private"
-    # elif response.status_code == 200:
-    #     return "public"
-    # elif response.status_code == 404:
-    #     raise NotFoundException("Document not found. Invalid document link")
-    return "public"
 
 
 def download_pdf(service, doc_id):
@@ -730,18 +701,10 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
     if match:
         doc_id = match.group(1)
-        # service = build('drive', 'v3', credentials=credentials)
-        # SCOPES = ['https://www.googleapis.com/auth/drive']
-        # SERVICE_ACCOUNT_FILE = os.path.join(
-        #     pathlib.Path(__file__).parent, "g-sheet-secret.json")
-        # credentials = None
-        # credentials = service_account.Credentials.from_service_account_file(
-        #     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
         service = build('drive', 'v3', credentials=credentials)
+
         meta_data = fetch_metadata_gdrive(
-            doc_id, service=service)
-        # get_google_permissions(doc_id, credentials)
+            doc_id)
 
         pdf_name = meta_data.get("name").replace(
             "-", " ").replace(".", " ").replace("pdf", "PDF")
@@ -750,7 +713,6 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
 
         doc_type = meta_data.get("mimeType")
 
-        print(page_title, doc_type, is_publicly_accessible_gdrive(doc_id=doc_id))
         print("meta data extracted")
 
         if doc_type != "application/pdf":
@@ -759,13 +721,13 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
             new_doc_type = doc_type.split('/')[1]
             point = get_point(page_title, page_title,
                               page_title, url, new_doc_type, url, user, src="drive")
-            point["payload"]["accessibility"] = "public"
+            point["payload"]["accessibility"] = meta_data.get("accessibility")
             return [point]
         else:
             pdf_file_name = download_pdf(service=service, doc_id=doc_id)
             pdf_sections = extract_pdf_sections(file_name=pdf_file_name)
             delete_pdf(file_name=pdf_file_name)
-            return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="pdf", user=user)
+            return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="pdf", user=user, accessibility=meta_data.get("accessibility"))
     return []
 
 
