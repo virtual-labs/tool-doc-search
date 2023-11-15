@@ -455,11 +455,11 @@ def get_github_accessibility(raw_url):
     headers = {'Authorization': f'token {access_token}'}
     response = requests.get(raw_url)
     if response.status_code == 200:
-        return "public"
+        return "public", response.text
     elif response.status_code == 404:
         response = requests.get(raw_url, headers=headers)
         if response.status_code == 200:
-            return "private"
+            return "private", response.text
         else:
             raise NotFoundException(
                 "Document not found. Invalid document link")
@@ -473,10 +473,11 @@ def get_chunks_from_md_github(url, user, page_title=""):
     github_raw_url = url.replace("https://github.com",
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
-    access = get_github_accessibility(github_raw_url)
 
     print(f"Fetching markdown from {github_raw_url}")
-    markdown_content = fetch_content_from_github(github_raw_url)
+
+    access, markdown_content = get_github_accessibility(github_raw_url)
+
     print(f"Markdown fetched from {github_raw_url}")
     data = get_chunks_from_markdown(
         markdown_content, url, "md", user, page_title, src="github")
@@ -494,12 +495,11 @@ def get_chunks_from_org_github(url, user, page_title=""):
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     print(f"Fetching ORG from {github_raw_url}")
-    markdown_content = fetch_content_from_github(github_raw_url)
+    access, markdown_content = get_github_accessibility(github_raw_url)
     print(f"ORG fetched from {github_raw_url}")
     data = get_chunks_from_org(
         markdown_content, url, "org", user, page_title)
     newdata = []
-    access = get_github_accessibility(github_raw_url)
     for chunk in data:
         chunk["payload"]["accessibility"] = access
         newdata.append(chunk)
@@ -513,7 +513,7 @@ def get_chunks_from_github(url, user, page_title=""):
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     print(f"Fetching GitHub content from {github_raw_url}")
-    content = fetch_content_from_github(github_raw_url)
+    access, content = get_github_accessibility(github_raw_url)
     print(f"Content fetched from {github_raw_url}")
     newdata = []
     data = []
@@ -521,7 +521,6 @@ def get_chunks_from_github(url, user, page_title=""):
         get_point(page_title+"::"+page_title+"::"+content, page_title,
                   page_title, url, "github", url, user, src="github")
     )
-    access = get_github_accessibility(github_raw_url)
     for chunk in data:
         chunk["payload"]["accessibility"] = access
         newdata.append(chunk)
