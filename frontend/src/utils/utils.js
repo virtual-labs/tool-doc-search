@@ -4,12 +4,14 @@ import GoogleSheetStyleTable from "../components/GoogleSheetStyleTable";
 import { DOCUMENT_TYPES } from "./config_data";
 
 const getResultText = (url, accessibility, text, type, present = false) => {
+  if (accessibility === "private") {
+    return "This is a private document.";
+  }
   if (type === "xlsx" && present) {
     let data = JSON.parse(text);
     return <GoogleSheetStyleTable data={data} url={url} />;
-  }
-  if (accessibility === "private") {
-    return "This is a private document.";
+  } else if (type === "xlsx") {
+    return "This is a Google Sheet.";
   }
   if (!present) {
     if (text.length > 200) return text.slice(0, 200) + "...";

@@ -13,6 +13,8 @@ const DEFAULT_QUERY = {
   limit: 10,
   thresh: 0.15,
   doc_filter: "Any",
+  src_filter: "Any",
+  acc_filter: "Any",
   page_title_filter: "",
 };
 
@@ -23,9 +25,22 @@ const DOCUMENT_TYPES = [
   { type: "gdoc", title: "Google Document" },
   { type: "xlsx", title: "Google Sheet" },
   { type: "github", title: "Github File" },
-  { type: "drive", title: "Google Drive File" },
+  // { type: "drive", title: "Google Drive File" },
   { type: "link", title: "Link" },
   { type: "pdf", title: "PDF file" },
+];
+
+const ACCESSIBILITY_TYPES = [
+  { type: "Any", title: "" },
+  { type: "private" },
+  { type: "public" },
+];
+
+const SRC_TYPES = [
+  { type: "Any", title: "" },
+  { type: "github", title: "Github File" },
+  { type: "drive", title: "Google Drive File" },
+  { type: "web", title: "Web" },
 ];
 
 const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
@@ -37,4 +52,6 @@ export {
   INSERT_DOC_URL,
   DEFAULT_QUERY,
   SEARCH_API,
+  ACCESSIBILITY_TYPES,
+  SRC_TYPES,
 };

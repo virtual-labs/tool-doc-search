@@ -33,9 +33,6 @@ function generate_url_div(i) {
     let pageTitleInput = document.createElement("input");
     pageTitleInput.type = "text";
 
-    let fetchContentCheckBox = document.createElement("input");
-    fetchContentCheckBox.type = "checkbox";
-
     let currentPageTitleInput = division.querySelector(".page-title-input");
 
     if (url.length && !currentPageTitleInput) {
@@ -54,25 +51,6 @@ function generate_url_div(i) {
     } else if (currentPageTitleInput) {
       currentPageTitleInput.placeholder = "(Optional) Page title";
     }
-
-    if (url.length && !division.querySelector(".fetch-content-checkbox")) {
-      // fetchContentCheckBox.checked =
-      //   documentTypeIdentifiers[doc_type].fetch_content;
-      // fetchContentCheckBox.disabled =
-      //   documentTypeIdentifiers[doc_type].fetch_content;
-      fetchContentCheckBox.id = "fetch-content_" + i;
-      fetchContentCheckBox.className = "fetch-content-checkbox";
-      fetchContentCheckBox.title = "Fetch content";
-      fetchContentCheckBox.style =
-        "display:inline-block; margin-left: 5px;top: 5px;position: relative;";
-
-      division.insertBefore(fetchContentCheckBox, pageTitleInput.nextSibling);
-    }
-    fetchContentCheckBox = document.querySelector("#fetch-content_" + i);
-    fetchContentCheckBox.checked =
-      documentTypeIdentifiers[doc_type].fetch_content;
-    fetchContentCheckBox.disabled =
-      documentTypeIdentifiers[doc_type].fetch_content;
   });
 
   division.appendChild(indexLabel);

@@ -191,6 +191,8 @@ class DocumentSearch:
                           limit=10,
                           thresh=0.0,
                           doc_filter="Any",
+                          src_filter="Any",
+                          acc_filter="Any",
                           page_title_filter=""):
         try:
 
@@ -203,16 +205,28 @@ class DocumentSearch:
             if (doc_filter != 'Any'):
                 must_conditions.append(models.FieldCondition(
                     key="type",  match=models.MatchValue(value=doc_filter)))
+
+            if (src_filter != 'Any'):
+                must_conditions.append(models.FieldCondition(
+                    key="src",  match=models.MatchValue(value=src_filter)))
+
+            if (acc_filter != 'Any'):
+                must_conditions.append(models.FieldCondition(
+                    key="accessibility",  match=models.MatchValue(value=acc_filter)))
+
             if (page_title_filter != ''):
                 must_conditions.append(models.FieldCondition(
                     key="page_title",
                     match=models.MatchText(text=page_title_filter)
                 ))
 
+            filter_condition = doc_filter != 'Any' or src_filter != "Any" or acc_filter != "Any" or page_title_filter != ""
+
             filter = models.Filter(
                 must=must_conditions
-            ) if doc_filter != 'Any' or page_title_filter != "" else None
+            ) if filter_condition else None
             print("Filters build")
+
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=self.encoder.encode(

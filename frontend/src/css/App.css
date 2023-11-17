@@ -2403,11 +2403,11 @@ textarea.w-select {
 }
 
 .form {
-  grid-column-gap: 0px;
+  /* grid-column-gap: 0px;
   grid-row-gap: 0px;
   grid-template-rows: auto auto;
   grid-template-columns: 3fr 1fr;
-  grid-auto-columns: 1fr;
+  grid-auto-columns: 1fr; */
   margin: 20px 10px 0;
   display: grid;
 }
@@ -2891,6 +2891,11 @@ textarea.w-select {
 .file-type.link,
 .doctype-view-box.link {
   background-color: #000000;
+}
+
+.file-type.web,
+.doctype-view-box.web {
+  background-color: #00a8e9;
 }
 
 .file-type.drive,

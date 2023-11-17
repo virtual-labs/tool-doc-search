@@ -5,6 +5,8 @@ import {
   DEFAULT_QUERY,
   DEFAULT_SECTION,
   SEARCH_API,
+  ACCESSIBILITY_TYPES,
+  SRC_TYPES,
 } from "../utils/config_data";
 import { getResultText } from "../utils/utils";
 import LoadingImg from "../media/loading-73.gif";
@@ -57,6 +59,14 @@ const SearchBox = ({ setPresent }) => {
     setQuery({ ...query, doc_filter: e.target.value });
   };
 
+  const setQuerySrcFilter = (e) => {
+    setQuery({ ...query, src_filter: e.target.value });
+  };
+
+  const setQueryAccessibilityFilter = (e) => {
+    setQuery({ ...query, acc_filter: e.target.value });
+  };
+
   const setQueryPageFilter = (e) => {
     setQuery({ ...query, page_title_filter: e.target.value });
   };
@@ -69,47 +79,82 @@ const SearchBox = ({ setPresent }) => {
           name="email-form"
           data-name="Email Form"
           method="get"
-          className="form w-full"
+          className="form w-full flex flex-col"
         >
-          <input
-            type="text"
-            className="search-query w-input"
-            maxLength="256"
-            name="name"
-            data-name="Name"
-            placeholder="Enter search query..."
-            value={query.search_query}
-            id="name"
-            onChange={setQueryText}
-          />
-          <input
-            type="submit"
-            value="Search"
-            className="submit-button w-button"
-            onClick={getResults}
-          />
-          <input
-            type="text"
-            className="page-title-filter"
-            placeholder="Add page title filter...."
-            value={query.page_title_filter}
-            id="field"
-            onChange={setQueryPageFilter}
-          />
-          <select
-            id="select-doctype"
-            className="select-doc-type"
-            value={query.doc_filter}
-            onChange={setQueryDocFilter}
-          >
-            {DOCUMENT_TYPES.map((doc, i) => {
-              return (
-                <option key={i} value={doc.type}>
-                  {doc.type}
-                </option>
-              );
-            })}
-          </select>
+          <div className="flex flex-row w-full">
+            <input
+              type="text"
+              className="search-query w-input"
+              maxLength="256"
+              name="name"
+              data-name="Name"
+              placeholder="Enter search query..."
+              value={query.search_query}
+              id="name"
+              onChange={setQueryText}
+            />
+            <input
+              type="submit"
+              value="Search"
+              className="submit-button w-button w-32"
+              onClick={getResults}
+            />
+          </div>
+          <div className="flex flex-row w-full">
+            <input
+              type="text"
+              className="page-title-filter flex-1"
+              placeholder="Add page title filter...."
+              value={query.page_title_filter}
+              id="field"
+              onChange={setQueryPageFilter}
+            />
+            <select
+              id="select-doctype"
+              className="select-doc-type"
+              value={query.doc_filter}
+              onChange={setQueryDocFilter}
+              title="Select document type"
+            >
+              {DOCUMENT_TYPES.map((doc, i) => {
+                return (
+                  <option key={i} value={doc.type}>
+                    {doc.type}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              id="select-doctype"
+              className="select-doc-type"
+              value={query.src_filter}
+              onChange={setQuerySrcFilter}
+              title="Select source type"
+            >
+              {SRC_TYPES.map((doc, i) => {
+                return (
+                  <option key={i} value={doc.type}>
+                    {doc.type}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              id="select-doctype"
+              className="select-doc-type"
+              value={query.acc_filter}
+              onChange={setQueryAccessibilityFilter}
+              title="Select accessibility type"
+            >
+              {ACCESSIBILITY_TYPES.map((doc, i) => {
+                return (
+                  <option key={i} value={doc.type}>
+                    {doc.type}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </form>
       </div>
       <div className="flex m-2 mb-1">

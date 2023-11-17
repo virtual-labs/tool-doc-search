@@ -18,6 +18,8 @@ def index():
         limit = 10
         thresh = 0.0
         doc_filter = "Any"
+        src_filter = "Any"
+        acc_filter = "Any"
         page_title_filter = ""
 
         data = request.json
@@ -39,10 +41,13 @@ def index():
             thresh = data["thresh"]
 
         if "doc_filter" in data:
-            # if not is_valid_doc_type(data["doc_filter"]):
-            #     raise BadRequestException(
-            #         "Unsupported doc_filter")
             doc_filter = data["doc_filter"]
+
+        if "src_filter" in data:
+            src_filter = data["src_filter"]
+
+        if "acc_filter" in data:
+            acc_filter = data["acc_filter"]
 
         if "page_title_filter" in data:
             if (type(data["page_title_filter"])) != str:
@@ -56,6 +61,8 @@ def index():
             limit=limit,
             thresh=thresh,
             doc_filter=doc_filter,
+            src_filter=src_filter,
+            acc_filter=acc_filter,
             page_title_filter=page_title_filter,)
 
         response = jsonify({"hits": len(result), "result": result})
