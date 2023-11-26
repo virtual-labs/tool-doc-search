@@ -1,5 +1,6 @@
 import React from "react";
 import { getResultText, getHeading } from "../utils/utils";
+import LinkIcon from "../media/link.png";
 
 const ResultViewBox = ({ present }) => {
   const isDrivePDF = (doc) => {
@@ -33,6 +34,9 @@ const ResultViewBox = ({ present }) => {
           >
             {present.document}
           </span>
+          <span>
+            <img className="h-8 w-4 p-0 ml-2 pb-4" src={LinkIcon} alt="link" />
+          </span>
           <span className={`accessibility-view-box ${present.accessibility}`}>
             {present.accessibility}
           </span>
@@ -49,6 +53,9 @@ const ResultViewBox = ({ present }) => {
             }}
           >
             {present.heading}
+          </span>
+          <span>
+            <img className="h-8 w-4 p-0 ml-2 pb-4" src={LinkIcon} alt="link" />
           </span>
           {isDrivePDF(present) && getPageSpan(present)}
         </h3>
