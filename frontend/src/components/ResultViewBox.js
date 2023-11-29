@@ -2,7 +2,7 @@ import React from "react";
 import { getResultText, getHeading } from "../utils/utils";
 import LinkIcon from "../media/link.png";
 
-const ResultViewBox = ({ present }) => {
+const ResultViewBox = ({ present, highlight }) => {
   const isDrivePDF = (doc) => {
     let slices = present.url.split("#");
     return (
@@ -65,8 +65,24 @@ const ResultViewBox = ({ present }) => {
             present.accessibility,
             present.text,
             present.type,
-            true
+            true,
+            present.search_query,
+            highlight
           )}
+          {present.accessibility === "private" ? (
+            <>
+              {" "}
+              <a
+                href={present.url}
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600"
+              >
+                {"verify"}
+              </a>{" "}
+              {"to access."}
+            </>
+          ) : null}
         </div>
       </div>
     </>

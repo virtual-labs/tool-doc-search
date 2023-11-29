@@ -584,11 +584,10 @@ def extract_pdf_sections(file_name):
     def is_valid_heading(heading, text):
 
         filter1 = heading != text
-        filter2 = len(heading) >= 10
         filter3 = "=" not in heading
         filter4 = (heading[0] != '(' and heading[-1] != ')')
 
-        filters = [filter1, filter2, filter3, filter4]
+        filters = [filter1, filter3, filter4]
 
         return all(filters)
 
@@ -616,12 +615,16 @@ def extract_pdf_sections(file_name):
         text = remove_unicode(section.to_text(
             include_children=True, recurse=True).strip())
 
+        print(json.dumps(
+            {"title": title, "text": text}, indent=4))
+
         if is_valid_heading(title, text):
             lines = [t.strip() for t in text.split("\n")[0:10]]
             current_page = get_page_number(lines[:4], current_page)
-            trimmed_text = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
+            trimmed_text = "\n".join(text.split("\n")[1:])
+
             sections.append(
-                {"title": title, "text": trimmed_text+" ...", "page": current_page+1})
+                {"title": title, "text": trimmed_text, "page": current_page+1})
 
     print("Sections generated")
     return sections
@@ -808,6 +811,7 @@ def get_chunks_batch(docs, credentials, user):
                 base_urls.append(doc["url"])
 
             except Exception as e:
+                print(e)
                 raise Exception(
                     f"Error occurred while parsing document {idx+1}, {str(e)}")
 
