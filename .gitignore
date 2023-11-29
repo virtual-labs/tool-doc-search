@@ -1,4 +1,4 @@
 .env
 secrets/
 venv/
-frontend/node_modules/
+search-page-react/node_modules/
