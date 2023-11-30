@@ -77,13 +77,17 @@ function countSubstringOccurrences(text, substring) {
   return matches ? matches.length : 0;
 }
 
+const countToWeightFunction = (cnt) => {
+  return 5 * Math.log2(1 + 0.1 * cnt);
+};
+
 const getRankedResult = (results, search_query) => {
   search_query = search_query.trim().toLowerCase();
   if (!search_query) return results;
   const searchWords = getSubWords(search_query);
   const rankedResults = [];
   for (let result of results) {
-    console.log(result, result.text);
+    // console.log(result, result.text);
     const lowerCaseResult = result?.text?.toLowerCase();
     const lowerCaseHeading = result.heading.toLowerCase();
 
@@ -99,8 +103,15 @@ const getRankedResult = (results, search_query) => {
       );
       score +=
         word.score *
-        (result.type === "xlsx" ? (!resultCnt ? 0 : 1) : resultCnt);
-      score += word.score * headingCnt * 10;
+        (result.type === "xlsx"
+          ? !resultCnt
+            ? 0
+            : countToWeightFunction(1)
+          : countToWeightFunction(resultCnt));
+      score +=
+        word.score *
+        countToWeightFunction(headingCnt) *
+        countToWeightFunction(10);
     }
     rankedResults.push({
       ...result,
@@ -109,6 +120,7 @@ const getRankedResult = (results, search_query) => {
     });
   }
   rankedResults.sort((a, b) => b.rank - a.rank);
+  // console.log(rankedResults);
   return rankedResults;
 };
 

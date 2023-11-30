@@ -118,7 +118,7 @@ document.getElementById("postButton").addEventListener("click", function () {
       var row = checkbox.closest("tr");
       var documentCell = row.cells[1];
       if (documentCell.querySelector("a") === null) return;
-      var typeCell = row.cells[2];
+      var typeCell = row.cells[3];
       var documentURL = documentCell.querySelector("a").getAttribute("href");
       var documentType = typeCell.textContent;
       let pt_valid =
@@ -170,6 +170,8 @@ document.getElementById("postButton").addEventListener("click", function () {
     action: isDirSelected ? "folder-update" : "update",
     data: postData,
   };
+  // alert(JSON.stringify(body));
+  // return;
   document.getElementById("loader").style.visibility = "visible";
   fetch("/insert_doc/protected_area", {
     method: "POST",

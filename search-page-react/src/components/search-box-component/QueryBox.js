@@ -17,9 +17,11 @@ const QueryBox = ({
   highlight,
   setHighlight,
   results,
+  inpRef,
 }) => {
   const getResults = async (e) => {
     e.preventDefault();
+    query.search_query = inpRef.current.value;
     if (loader) return;
     if (
       query.search_query.trim() === "" &&
@@ -51,10 +53,6 @@ const QueryBox = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const setQueryText = (e) => {
-    setQuery({ ...query, search_query: e.target.value });
   };
 
   const setQueryDocFilter = (e) => {
@@ -90,9 +88,8 @@ const QueryBox = ({
               name="name"
               data-name="Name"
               placeholder="Enter search query..."
-              value={query.search_query}
               id="name"
-              onChange={setQueryText}
+              ref={inpRef}
             />
             <input
               type="submit"

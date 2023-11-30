@@ -4,7 +4,8 @@ from sentence_transformers import SentenceTransformer
 from utils.document_parser import get_chunks_batch, get_doc_urls_from_drive
 import uuid
 from error.CustomException import CustomException
-from flask import jsonify
+from utils.document_parser import get_formatted_google_url
+import re
 import json
 import datetime
 
@@ -161,6 +162,10 @@ class DocumentSearch:
             print(len(urls))
             records = []
             current_time = datetime.datetime.now()
+            match = re.search(r'/folders/([a-zA-Z0-9_-]+)', folderUrl)
+            if match:
+                doc_id = match.group(1)
+                folderUrl = get_formatted_google_url(doc_id, "folder")
             records.append({
                 "folder_name": name,
                 "base_url": folderUrl,

@@ -5,7 +5,7 @@ import { getRankedResult } from "../../utils/utils";
 
 const ResultPane = ({ loader, results, setPresent, query, highlight }) => {
   const rankedResult = getRankedResult(results, query.search_query);
-  console.log(rankedResult);
+  // console.log(rankedResult);
   return (
     <>
       {loader && (

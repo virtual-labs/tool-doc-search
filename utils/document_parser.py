@@ -254,6 +254,7 @@ def get_chunks_from_xlsx(url, credentials, user, page_title=""):
     print(f"Getting accessiblility of {url} ")
     if match:
         doc_id = match.group(1)
+        url = get_formatted_google_url(doc_id, "xlsx")
         meta_data = fetch_metadata_gdrive(doc_id)
         accessibility = meta_data.get("accessibility")
         print(f"Accessiblility of {url} is {accessibility}")
@@ -450,6 +451,18 @@ def get_chunks_from_org(org_content, url, type, user, page_title=""):
     return data
 
 
+def get_formatted_google_url(doc_id, type):
+    if type == "gdoc":
+        return f'https://docs.google.com/document/d/{doc_id}'
+    elif type == "xlsx":
+        return f'https://docs.google.com/spreadsheets/d/{doc_id}'
+    elif type == 'drive':
+        return f'https://drive.google.com/file/d/{doc_id}'
+    elif type == "folder":
+        return f'https://drive.google.com/drive/u/0/folders/{doc_id}'
+    return f'https://drive.google.com/file/d/{doc_id}'
+
+
 def get_github_accessibility(raw_url):
     access_token = os.getenv("GITHUB_ACCESS_TOKEN")
     headers = {'Authorization': f'token {access_token}'}
@@ -540,6 +553,7 @@ def get_chunks_from_gdoc(url, credentials, user, page_title=""):
     print(f"Getting accessiblility of {url} ")
     if match:
         doc_id = match.group(1)
+        url = get_formatted_google_url(doc_id, "gdoc")
         accessibility = get_gdoc_accessiblility(document_id=doc_id, link=url)
         print(f"Accessiblility of {url} is {accessibility}")
         markdown_content = ""
@@ -724,6 +738,7 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
     match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
     if match:
         doc_id = match.group(1)
+        url = get_formatted_google_url(doc_id, "drive")
         service = build('drive', 'v3', credentials=credentials)
 
         meta_data = fetch_metadata_gdrive(
@@ -759,6 +774,7 @@ def get_doc_urls_from_drive(folder_url, credentials):
     print(f"Getting accessiblility of {folder_url} ")
     if match:
         doc_id = match.group(1)
+        folder_url = get_formatted_google_url(doc_id, "folder")
         print(doc_id)
         meta_data = fetch_metadata_gdrive(doc_id)
         name = meta_data.get("name")
@@ -786,7 +802,7 @@ def get_doc_urls_from_drive(folder_url, credentials):
                         if f_type == "xlsx":
                             urls.append(
                                 {
-                                    "url": f"https://docs.google.com/spreadsheets/d/{item['id']}/edit#gid=0",
+                                    "url": f"https://docs.google.com/spreadsheets/d/{item['id']}",
                                     "page_title": item["name"],
                                     "type": f_type
                                 }
@@ -794,7 +810,7 @@ def get_doc_urls_from_drive(folder_url, credentials):
                         elif f_type == "gdoc":
                             urls.append(
                                 {
-                                    "url": f"https://docs.google.com/document/d/{item['id']}/edit",
+                                    "url": f"https://docs.google.com/document/d/{item['id']}",
                                     "page_title": item["name"],
                                     "type": f_type
                                 }
@@ -802,7 +818,7 @@ def get_doc_urls_from_drive(folder_url, credentials):
                         else:
                             urls.append(
                                 {
-                                    "url": f"https://drive.google.com/file/d/{item['id']}/view",
+                                    "url": f"https://drive.google.com/file/d/{item['id']}",
                                     "page_title": item["name"],
                                     "type": f_type
                                 }
