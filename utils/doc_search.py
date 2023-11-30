@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from utils.document_parser import get_chunks_batch
+from utils.document_parser import get_chunks_batch, get_doc_urls_from_drive
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
@@ -153,6 +153,32 @@ class DocumentSearch:
             print(e)
             raise e
 
+    def insert_drive_folder(self, folderUrl, credentials, user="unknown", operation="insert"):
+        try:
+            urls, name, accessibility = get_doc_urls_from_drive(
+                folderUrl, credentials)
+            print(json.dumps(urls, indent=4))
+            print(len(urls))
+            records = []
+            current_time = datetime.datetime.now()
+            records.append({
+                "folder_name": name,
+                "base_url": folderUrl,
+                "accessibility": accessibility,
+                "created_by": user,
+                "created_at": current_time,
+                "updated_by": user,
+                "last_updated": current_time,
+                "files": urls,
+                "dir": 1
+            })
+            self.doc_record.insert_folder_entry(records, operation=operation)
+            self.doc_record.insert_entry(records, operation=operation)
+            return self.insert_doc_batch(
+                docs=urls, credentials=credentials, user=user, operation="insert")
+        except Exception as e:
+            raise e
+
     def delete_doc(self, urls, user="unknown"):
         # print("indelete_doc")
         # return jsonify({})
@@ -241,6 +267,8 @@ class DocumentSearch:
                 parsed_text = hit.payload["text"].split("::")
                 if len(parsed_text) > 2:
                     parsed_text = parsed_text[2].strip()
+                else:
+                    parsed_text = hit.payload["text"]
                 search_results.append({
                     "accessibility": hit.payload["accessibility"],
                     "type": hit.payload["type"],
@@ -250,7 +278,7 @@ class DocumentSearch:
                     "heading": hit.payload["heading"],
                     "document": hit.payload["page_title"],
                     "src": hit.payload["src"],
-                    "text": parsed_text,
+                    "text": str(parsed_text),
                 })
             # print(json.dumps(search_results, indent=4))
             print("Search Results for", page_title_filter,

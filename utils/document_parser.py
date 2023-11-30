@@ -615,8 +615,8 @@ def extract_pdf_sections(file_name):
         text = remove_unicode(section.to_text(
             include_children=True, recurse=True).strip())
 
-        print(json.dumps(
-            {"title": title, "text": text}, indent=4))
+        # print(json.dumps(
+        #     {"title": title, "text": text}, indent=4))
 
         if is_valid_heading(title, text):
             lines = [t.strip() for t in text.split("\n")[0:10]]
@@ -754,6 +754,67 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
     return []
 
 
+def get_doc_urls_from_drive(folder_url, credentials):
+    match = re.search(r'/folders/([a-zA-Z0-9_-]+)', folder_url)
+    print(f"Getting accessiblility of {folder_url} ")
+    if match:
+        doc_id = match.group(1)
+        print(doc_id)
+        meta_data = fetch_metadata_gdrive(doc_id)
+        name = meta_data.get("name")
+        accessibility = meta_data.get("accessibility")
+        print(f"Accessiblility of {folder_url} is {accessibility}")
+        type = meta_data.get("mimeType")
+        if type == "application/vnd.google-apps.folder":
+            print(f"Fetching files from google drive folder {folder_url}")
+            service = build('drive', 'v3', credentials=credentials)
+            results = service.files().list(
+                q=f"'{doc_id}' in parents", fields="nextPageToken, files(id, name, mimeType)").execute()
+            items = results.get('files', [])
+            if not items:
+                print('No files found.')
+            else:
+                print('Files:')
+                urls = []
+                for item in items:
+                    print(u'{0} ({1})'.format(item['name'], item['id']))
+                    if item["mimeType"] != "application/vnd.google-apps.folder":
+                        f_type = item["mimeType"].split('/')[1]
+                        f_type = "xlsx" if f_type == "vnd.google-apps.spreadsheet" else f_type
+                        f_type = "gdoc" if f_type == "vnd.google-apps.document" else f_type
+
+                        if f_type == "xlsx":
+                            urls.append(
+                                {
+                                    "url": f"https://docs.google.com/spreadsheets/d/{item['id']}/edit#gid=0",
+                                    "page_title": item["name"],
+                                    "type": f_type
+                                }
+                            )
+                        elif f_type == "gdoc":
+                            urls.append(
+                                {
+                                    "url": f"https://docs.google.com/document/d/{item['id']}/edit",
+                                    "page_title": item["name"],
+                                    "type": f_type
+                                }
+                            )
+                        else:
+                            urls.append(
+                                {
+                                    "url": f"https://drive.google.com/file/d/{item['id']}/view",
+                                    "page_title": item["name"],
+                                    "type": f_type
+                                }
+                            )
+                return urls, name, accessibility
+        else:
+            raise Exception("Invalid drive folder id")
+    else:
+        raise Exception("Invalid drive folder")
+    return []
+
+
 def get_chunks_batch(docs, credentials, user):
     print("Getting batch")
     try:
@@ -802,8 +863,13 @@ def get_chunks_batch(docs, credentials, user):
                     chunk = [point]
 
                 if (len(chunk) == 0):
-                    raise Exception(
-                        f"No headings found while parsing document {idx+1}")
+                    print("Generating chunk for unknown doc")
+                    if doc["page_title"].strip() == "":
+                        raise Exception("Provide page title for unknown doc.")
+                    point = get_point(doc["page_title"], doc["page_title"],
+                                      doc["page_title"], doc["url"], "link", doc["url"], user)
+                    point["payload"]["accessibility"] = "public"
+                    chunk = [point]
 
                 for ch in chunk:
                     chunks.append(ch)

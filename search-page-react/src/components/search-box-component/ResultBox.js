@@ -1,17 +1,19 @@
 import React from "react";
 import { getResultText } from "../../utils/utils";
-import HighlightedText from "../../components/HighlightedText";
+import HighlightedText from "../HighlightedText";
 
 const ResultBox = ({ result, setPresent, searchQuery, highlight }) => {
   const showResult = (result) => {
     setPresent({ ...result, search_query: searchQuery });
   };
+
   const text = getResultText(
     result.url,
     result.accessibility,
     result.text,
     result.type
   );
+
   return (
     <div className="result-box" onClick={() => showResult(result)}>
       <div className="result-heading flex flex-row">

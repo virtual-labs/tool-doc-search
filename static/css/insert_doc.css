@@ -45,7 +45,8 @@ body {
   -webkit-transform: translate(-50%, 0%);
 }
 
-#result-pane-insert {
+#result-pane-insert,
+.result-pane {
   margin-top: 10px;
   background-color: #d8d7d7;
   padding: 10px;
@@ -92,7 +93,7 @@ input[type="submit"] {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 input[type="submit"]:hover {
@@ -155,6 +156,14 @@ input[type="submit"]:active {
 
 .doctype-label.pdf {
   background-color: rgb(218, 21, 21);
+}
+
+.doctype-label.file {
+  background-color: rgb(21, 139, 218);
+}
+
+.doctype-label.dir {
+  background-color: rgb(144, 69, 42);
 }
 
 .result-msg {
@@ -482,4 +491,8 @@ button:active {
 .page-title-input {
   width: 25% !important;
   margin-left: 5px;
+}
+
+#insert-folder-button {
+  width: 200px;
 }

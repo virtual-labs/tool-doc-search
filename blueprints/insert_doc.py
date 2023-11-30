@@ -114,34 +114,53 @@ def protected_area():
 
             # print(json.dumps(req, indent=4, sort_keys=True))
             # return jsonify({"message": "Invalid action"})
+            try:
+                if "action" not in req:
+                    raise BadRequestException("Please provide action")
 
-            if "action" not in req:
-                raise BadRequestException("Please provide action")
+                if (req["action"] == "insert" or req["action"] == "update"):
+                    if "data" not in req:
+                        raise BadRequestException("Please provide data")
+                    result = insert_document_batch(
+                        docs=req["data"], credentials=credentials, name=session["name"], doc_search=doc_search, operation=req["action"])
+                    return jsonify(result)
 
-            if (req["action"] == "insert" or req["action"] == "update"):
-                if "data" not in req:
-                    raise BadRequestException("Please provide data")
-                result = insert_document_batch(
-                    docs=req["data"], credentials=credentials, name=session["name"], doc_search=doc_search, operation=req["action"])
-                return jsonify(result)
+                elif (req["action"] == "delete"):
+                    if "data" not in req:
+                        raise BadRequestException("Please provide data")
+                    print("in delete")
+                    print(req["data"])
+                    result = doc_search.delete_doc(
+                        urls=req["data"],  user=session["name"])
+                    print("got it")
+                    return jsonify(result)
 
-            elif (req["action"] == "delete"):
-                if "data" not in req:
-                    raise BadRequestException("Please provide data")
-                print("in delete")
-                print(req["data"])
-                result = doc_search.delete_doc(
-                    urls=req["data"],  user=session["name"])
-                print("got it")
-                return jsonify(result)
+                elif (req["action"] == "folder-insert" or req["action"] == "folder-update"):
+                    if "data" not in req:
+                        raise BadRequestException("Please provide data")
+                    print("in delete")
+                    print(req["data"])
 
-            else:
-                return jsonify({"message": "Invalid action"})
+                    if len(req["data"]) == 0:
+                        raise BadRequestException("Please provide a folder")
+                    if len(req["data"]) > 1:
+                        raise BadRequestException(
+                            "Please provide only one folder")
+                    op = "insert" if req["action"] == "folder-insert" else "update"
+                    result = doc_search.insert_drive_folder(
+                        folderUrl=req["data"][0], credentials=credentials,  user=session["name"], operation=op)
+                    print("got it")
+                    return jsonify(result)
+
+                else:
+                    return jsonify({"message": "Invalid action"})
+            except BadRequestException as e:
+                return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
 
         return render_template('update_document_page.html', result=result, user_name=session["name"])
 
     except Exception as e:
-        return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
+        return jsonify({"message": f"{str(e)}."}), 500
 
 
 @insert_doc.route("/get_docs", methods=['GET'])

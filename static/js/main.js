@@ -3,12 +3,14 @@ let total_recs = 0;
 function generateTable(data) {
   let table = "<table>";
   table +=
-    "<tr><th><input type='checkbox' name='selected' id='clearSelection'></th><th>Document</th><th>Type</th><th>Accessibility</th><th>Last updated</th><th>Updated By</th></tr>";
+    "<tr><th><input type='checkbox' name='selected' id='clearSelection'></th><th>Document</th><th></th><th>Type</th><th>Accessibility</th><th>Last updated</th><th>Updated By</th></tr>";
 
   for (const item of data) {
+    let dir = item.dir === 0 ? "file" : "dir";
     table += `<tr>`;
     table += `<td><input type="checkbox" name="selected"></td>`;
     table += `<td><a href="${item.base_url}" target='_blank'>${item.page_title}</a></td>`;
+    table += `<td><span class="doctype-label ${dir}">${dir}</span></td>`;
     table += `<td><span class="doctype-label ${item.type}">${item.type}</span></td>`;
     table += `<td><span class="accessibility-label ${item.accessibility}">${item.accessibility}</span></td>`;
     table += `<td>${new Date(item.last_updated)
@@ -78,9 +80,9 @@ async function load_docs(text, page) {
     console.log(`Page ${page_object.page}`);
     let resultPane = document.getElementById("result-pane");
     resultPane.innerHTML = `<span>${num} ${
-      num == 1 ? "document" : "documents"
+      num == 1 ? "document" : "entries"
     }<span>
-    <span style='float:right'>${total_recs} documents</span>
+    <span style='float:right'>${total_recs} entries</span>
       `;
 
     resultPane.innerHTML += generateTable(data);
@@ -137,20 +139,44 @@ document.getElementById("postButton").addEventListener("click", function () {
       // );
     }
   });
+  let isDirSelected = 0;
   if (selectedURLs.length > 0) {
     console.log(selectedURLs);
+    let dirMap = new Map();
+    selectedURLs.forEach(function (item, index) {
+      if (item.type === "dir") {
+        if (!dirMap.get("dir", -1)) dirMap["dir"] = 1;
+        else dirMap["dir"] += 1;
+      } else {
+        if (!dirMap.get("file", -1)) dirMap["file"] = 1;
+        else dirMap["file"] += 1;
+      }
+    });
+    if (dirMap["dir"] > 0 && dirMap["file"] > 0) {
+      alert("Please select either files or directories at a time.");
+      return;
+    } else if (dirMap["dir"] > 1) {
+      alert(`Please select only one directory at a time.`);
+      return;
+    } else if (dirMap["dir"] === 1) {
+      isDirSelected = 1;
+    }
   } else {
     alert("No records selected.");
     return;
   }
-  var postData = selectedURLs;
+  let postData = isDirSelected ? [selectedURLs[0].url] : selectedURLs;
+  let body = {
+    action: isDirSelected ? "folder-update" : "update",
+    data: postData,
+  };
   document.getElementById("loader").style.visibility = "visible";
   fetch("/insert_doc/protected_area", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ action: "update", data: postData }),
+    body: JSON.stringify(body),
   })
     .then((response) => response.json())
     .then((data) => {
@@ -191,15 +217,8 @@ document.getElementById("reload").addEventListener("click", function (event) {
   load_docs(page_object.search_query, page_object.page);
 });
 
-document
-  .getElementById("modal-button")
-  .addEventListener("click", function (event) {
-    event.preventDefault();
-    document.getElementById("id01").style.display = "block";
-  });
-
 document.getElementById("deleteButton").addEventListener("click", function () {
-  let text = "Are you sure to delete selected document(s)?";
+  let text = "Are you sure to remove selected document(s)?";
 
   var selectedURLs = [];
 
@@ -260,3 +279,17 @@ document.getElementById("next-button").addEventListener("click", function () {
   page_object.page += 1;
   load_docs(page_object.search_query, page_object.page);
 });
+
+document
+  .getElementById("modal-button")
+  .addEventListener("click", function (event) {
+    event.preventDefault();
+    document.getElementById("id01").style.display = "block";
+  });
+
+document
+  .getElementById("drive-folder-button")
+  .addEventListener("click", function (event) {
+    event.preventDefault();
+    document.getElementById("id02").style.display = "block";
+  });

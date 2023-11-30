@@ -78,18 +78,29 @@ function countSubstringOccurrences(text, substring) {
 }
 
 const getRankedResult = (results, search_query) => {
+  search_query = search_query.trim().toLowerCase();
+  if (!search_query) return results;
   const searchWords = getSubWords(search_query);
   const rankedResults = [];
   for (let result of results) {
-    const lowerCaseResult = result.text.toLowerCase();
+    console.log(result, result.text);
+    const lowerCaseResult = result?.text?.toLowerCase();
     const lowerCaseHeading = result.heading.toLowerCase();
 
     let score = 0;
     for (let word of searchWords) {
+      const resultCnt = countSubstringOccurrences(
+        lowerCaseResult,
+        word.sentence
+      );
+      const headingCnt = countSubstringOccurrences(
+        lowerCaseHeading,
+        word.sentence
+      );
       score +=
-        word.score * countSubstringOccurrences(lowerCaseResult, word.sentence);
-      score +=
-        word.score * countSubstringOccurrences(lowerCaseHeading, word.sentence);
+        word.score *
+        (result.type === "xlsx" ? (!resultCnt ? 0 : 1) : resultCnt);
+      score += word.score * headingCnt * 10;
     }
     rankedResults.push({
       ...result,

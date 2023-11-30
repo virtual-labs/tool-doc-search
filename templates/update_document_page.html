@@ -35,6 +35,23 @@
         <script src="/static/js/insert_pane.js"></script>
       </div>
     </div>
+
+    <div id="id02" class="modal">
+      <div class="modal-content animate">
+        <h2>Insert / Update Drive folder</h2>
+        <form style="display: inline">
+          <input
+            type="text"
+            id="folder-url-input"
+            class="url-input"
+            placeholder="Folder URL"
+          />
+          <input id="insert-folder-button" type="submit" value="Submit" />
+        </form>
+        <div id="result-pane-folder-insert" class="result-pane"></div>
+      </div>
+    </div>
+    <script src="/static/js/insert_folder.js"></script>
     <div class="navbar-no-shadow">
       <div
         af-el="navbar"
@@ -75,6 +92,12 @@
         <button type="button" id="reload" title="Refresh">&#x21bb;</button>
         <button id="modal-button" style="float: right">
           Insert documents with URL
+        </button>
+        <button
+          id="drive-folder-button"
+          style="float: right; margin-right: 5px"
+        >
+          Insert Drive Folder with URL
         </button>
       </form>
       <button id="postButton">Update documents</button>
