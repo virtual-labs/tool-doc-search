@@ -6,11 +6,12 @@ from error.CustomException import CustomException
 from flask import jsonify
 import json
 import random
+from utils.delete_doc_util import delete_document_chunks
 
 
 class DocumentRecord:
 
-    def __init__(self, url, api_key, collection_name, folder_collection_name) -> None:
+    def __init__(self, url, api_key, collection_name, folder_collection_name, doc_collection_name) -> None:
         self.qdrant_client = QdrantClient(
             url=url,
             api_key=api_key,
@@ -18,6 +19,7 @@ class DocumentRecord:
 
         self.collection_name = collection_name
         self.folder_collection_name = folder_collection_name
+        self.doc_collection_name = doc_collection_name
 
         # self.reset_database()
 
@@ -173,10 +175,61 @@ class DocumentRecord:
             print(e)
             raise e
 
-    def delete_entry(self, docs):
-        print("Deleting entries in Record DB")
+    def delete_folder(self, folderUrl, user="unknown"):
         try:
-            if len(docs):
+            print(
+                f"Deleting folder {folderUrl} request from user :", user)
+
+            print("Extracting file urls from folder")
+
+            filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="base_url",
+                        match=models.MatchValue(
+                            value=folderUrl),
+                    )
+                ]
+            )
+
+            hits = self.qdrant_client.search(
+                collection_name=self.folder_collection_name,
+                query_vector=[0.5, 0.5, 0.5, 0.5],
+                with_vectors=False,
+                with_payload=True,
+                score_threshold=0.0,
+                query_filter=filter
+            )
+            results = []
+            for hit in hits:
+                results.append({
+                    "folder_name": hit.payload["folder_name"],
+                    "files": hit.payload.get("files", []),
+                    "base_url": hit.payload["base_url"]
+                })
+            print(json.dumps(results, indent=4))
+            print(len(results))
+
+            if (len(results) == 1):
+                folder = results[0]
+                base_url = folder.get("base_url", None)
+                files = folder.get("files", [])
+                folder_name = folder.get("folder_name", "")
+                print("Deleting folder from recordDB", folder_name)
+                self.qdrant_client.delete(
+                    collection_name=f"{self.folder_collection_name}",
+                    points_selector=models.FilterSelector(
+                        filter=models.Filter(
+                            should=[
+                                models.FieldCondition(
+                                    key="base_url",
+                                    match=models.MatchValue(value=base_url),
+                                )
+                            ]
+                        )
+                    ),
+                )
+
                 self.qdrant_client.delete(
                     collection_name=f"{self.collection_name}",
                     points_selector=models.FilterSelector(
@@ -184,21 +237,34 @@ class DocumentRecord:
                             should=[
                                 models.FieldCondition(
                                     key="base_url",
-                                    match=models.MatchValue(
-                                        value=doc),
-                                ) for doc in docs
+                                    match=models.MatchValue(value=base_url),
+                                )
                             ]
                         )
                     ),
                 )
-                print("Records")
-                print(json.dumps(
-                    docs, indent=4))
-                print("Deleted records")
-                return "success"
+
+                print("Folder deleted from recordDB", folder_name)
+                print("Deleting documents from collection")
+                urls = [doc.get("url") for doc in files]
+                delete_document_chunks(urls=urls, qdrant_client=self.qdrant_client, collection_name=self.doc_collection_name,
+                                       record_collection_name=self.collection_name, models=models)
+                print("Documents deleted from collection")
             else:
-                raise Exception("No valid document.")
+                raise Exception("Invalid folder")
+            # print("Deleting document chunks")
+
+            # print("Documents deleted")
+            # print("Deleting records")
+            # self.doc_record.delete_entry(urls)
+            # print("Records deleted")
+            resultObj = {
+                "message": f"Folder deleted successfully", "result": folderUrl}
+            print(json.dumps(resultObj, indent=4))
+            return resultObj
+
         except Exception as e:
+            print(e)
             raise e
 
     def test(self):

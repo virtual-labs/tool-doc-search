@@ -8,6 +8,7 @@ from utils.document_parser import get_formatted_google_url
 import re
 import json
 import datetime
+from utils.delete_doc_util import delete_document_chunks
 
 
 class DocumentSearch:
@@ -191,28 +192,8 @@ class DocumentSearch:
             print(
                 f"Deleting documents {json.dumps(urls, indent=4)} request from user :", user)
             if len(urls):
-                print("Deleting document chunks")
-                self.qdrant_client.delete(
-                    collection_name=f"{self.collection_name}",
-                    points_selector=models.FilterSelector(
-                        filter=models.Filter(
-                            should=[
-                                models.FieldCondition(
-                                    key="base_url",
-                                    match=models.MatchValue(value=base_url),
-                                ) for base_url in urls
-                            ]
-                        )
-                    ),
-                )
-                print("Documents deleted")
-                print("Deleting records")
-                self.doc_record.delete_entry(urls)
-                print("Records deleted")
-                resultObj = {
-                    "message": f"Document{'s' if len(urls) > 1 else ''} deleted successfully", "result": urls}
-                print(json.dumps(resultObj, indent=4))
-                return resultObj
+                delete_document_chunks(urls=urls, qdrant_client=self.qdrant_client, collection_name=self.collection_name,
+                                       record_collection_name=self.doc_record.collection_name, models=models)
             else:
                 raise Exception("No valid document.")
         except Exception as e:

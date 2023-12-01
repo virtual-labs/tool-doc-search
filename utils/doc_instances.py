@@ -8,7 +8,8 @@ doc_record = DocumentRecord(url=os.getenv("QDRANT_URL"),
                             api_key=os.getenv(
     "QDRANT_API"),
     collection_name=os.getenv("QDRANT_RECORD_COLLECTION"),
-    folder_collection_name=os.getenv("QDRANT_FOLDER_COLLECTION"))
+    folder_collection_name=os.getenv("QDRANT_FOLDER_COLLECTION"),
+    doc_collection_name=os.getenv("QDRANT_COLLECTION"),)
 
 doc_search = DocumentSearch(url=os.getenv("QDRANT_URL"),
                             api_key=os.getenv("QDRANT_API"),

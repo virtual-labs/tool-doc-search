@@ -89,7 +89,7 @@ async function load_docs(text, page) {
     document
       .getElementById("clearSelection")
       .addEventListener("click", function (evt) {
-        var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        let checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
         checkboxes.forEach(function (checkbox, index) {
           if (evt.target.checked) {
@@ -109,18 +109,18 @@ async function load_docs(text, page) {
 load_docs(page_object.search_query, page_object.page);
 
 document.getElementById("postButton").addEventListener("click", function () {
-  var selectedURLs = [];
+  let selectedURLs = [];
 
-  var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  let checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
   checkboxes.forEach(function (checkbox, index) {
     if (checkbox.checked) {
-      var row = checkbox.closest("tr");
-      var documentCell = row.cells[1];
+      let row = checkbox.closest("tr");
+      let documentCell = row.cells[1];
       if (documentCell.querySelector("a") === null) return;
-      var typeCell = row.cells[3];
-      var documentURL = documentCell.querySelector("a").getAttribute("href");
-      var documentType = typeCell.textContent;
+      let typeCell = row.cells[3];
+      let documentURL = documentCell.querySelector("a").getAttribute("href");
+      let documentType = typeCell.textContent;
       let pt_valid =
         !documentTypeIdentifiers[documentType] ||
         documentTypeIdentifiers[documentType].page_title_req;
@@ -194,12 +194,12 @@ document.getElementById("postButton").addEventListener("click", function () {
     });
 });
 
-var form = document.getElementById("myForm");
+let form = document.getElementById("myForm");
 
 form.addEventListener("submit", function (event) {
   event.preventDefault();
 
-  var text = document.getElementById("search_query").value;
+  let text = document.getElementById("search_query").value;
   text = text.trim();
   if (text === "") {
     alert("Please fill out all fields.");
@@ -222,37 +222,75 @@ document.getElementById("reload").addEventListener("click", function (event) {
 document.getElementById("deleteButton").addEventListener("click", function () {
   let text = "Are you sure to remove selected document(s)?";
 
-  var selectedURLs = [];
+  let selectedURLs = [];
+  let urlTypes = [];
 
-  var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  let checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
   checkboxes.forEach(function (checkbox, index) {
     if (checkbox.checked) {
-      var row = checkbox.closest("tr");
-      var documentCell = row.cells[1];
+      let row = checkbox.closest("tr");
+      let documentCell = row.cells[1];
+      let typeCell = row.cells[2];
       if (documentCell.querySelector("a") === null) return;
-      var documentURL = documentCell.querySelector("a").getAttribute("href");
+      let documentURL = documentCell.querySelector("a").getAttribute("href");
       selectedURLs.push(documentURL);
+      let documentType = typeCell.textContent;
+      urlTypes.push(documentType);
     }
   });
 
+  let isDirSelected = 0;
   if (selectedURLs.length > 0) {
     console.log(selectedURLs);
+    let dirMap = new Map();
+    selectedURLs.forEach(function (item, index) {
+      if (urlTypes[index] === "dir") {
+        if (!dirMap.get("dir", -1)) dirMap["dir"] = 1;
+        else dirMap["dir"] += 1;
+      } else {
+        if (!dirMap.get("file", -1)) dirMap["file"] = 1;
+        else dirMap["file"] += 1;
+      }
+    });
+    if (dirMap["dir"] > 0 && dirMap["file"] > 0) {
+      alert("Please select either files or directories at a time.");
+      return;
+    } else if (dirMap["dir"] > 1) {
+      alert(`Please select only one directory at a time.`);
+      return;
+    } else if (dirMap["dir"] === 1) {
+      isDirSelected = 1;
+    }
   } else {
     alert("No records selected.");
     return;
   }
+
   if (confirm(text) == false) {
     return;
   }
-  var postData = selectedURLs;
+  if (isDirSelected) {
+    let dirMessage =
+      "You have selected a directory. All files present inside it at the time of insertion will be removed. Are you sure?";
+    if (confirm(dirMessage) == false) {
+      return;
+    }
+  }
+  let postData = isDirSelected ? [selectedURLs[0]] : selectedURLs;
+  let body = {
+    action: isDirSelected ? "folder-delete" : "delete",
+    data: postData,
+  };
+
+  // return;
   document.getElementById("loader").style.visibility = "visible";
   fetch("/insert_doc/protected_area", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ action: "delete", data: postData }),
+    body: JSON.stringify(body),
   })
     .then((response) => response.json())
     .then((data) => {

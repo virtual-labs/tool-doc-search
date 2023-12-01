@@ -135,7 +135,7 @@ def protected_area():
                     print("got it")
                     return jsonify(result)
 
-                elif (req["action"] == "folder-insert" or req["action"] == "folder-update"):
+                elif (req["action"] == "folder-insert" or req["action"] == "folder-update" or req["action"] == "folder-delete"):
                     if "data" not in req:
                         raise BadRequestException("Please provide data")
                     print("in delete")
@@ -146,9 +146,16 @@ def protected_area():
                     if len(req["data"]) > 1:
                         raise BadRequestException(
                             "Please provide only one folder")
-                    op = "insert" if req["action"] == "folder-insert" else "update"
-                    result = doc_search.insert_drive_folder(
-                        folderUrl=req["data"][0], credentials=credentials,  user=session["name"], operation=op)
+
+                    if req["action"] == "folder-delete":
+                        print("Started deleting folder")
+                        result = doc_record.delete_folder(
+                            folderUrl=req["data"][0],  user=session["name"])
+                    else:
+                        op = "insert" if req["action"] == "folder-insert" else "update"
+                        result = doc_search.insert_drive_folder(
+                            folderUrl=req["data"][0], credentials=credentials,  user=session["name"], operation=op)
+
                     print("got it")
                     return jsonify(result)
 
