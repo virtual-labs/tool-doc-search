@@ -27,22 +27,8 @@ document
       .then((data) => {
         console.log(data);
         const result = data;
-
         let resultPane = document.getElementById("result-pane-folder-insert");
-        resultPane.innerHTML = "";
-        if (result.hasOwnProperty("error")) {
-          resultPane.innerHTML += "<h3>Error occurred</h3>";
-          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
-          resultPane.innerHTML +=
-            "<span class='result-attr'>Status Code</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.status_code}</p>`;
-        } else {
-          resultPane.innerHTML += "<h3>Success</h3>";
-          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
-          resultPane.innerHTML += generateResultTable(result["result"]);
-        }
+        showResult(resultPane, result);
       })
       .catch((error) => {
         console.error(error);

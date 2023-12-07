@@ -13,6 +13,71 @@ function generateResultTable(data) {
   return table;
 }
 
+function generateParseErrorTable(data) {
+  let table = "<table>";
+  table += "<tr><th>URL</th><th>Error Message</th></tr>";
+
+  for (const item of data) {
+    table += `<tr>`;
+    table += `<td style="max-width:300px"><p><a href="${item.url}" target='_blank'>${item.url}</a></p></td>`;
+    table += `<td><textarea rows="4" cols="50">${item.msg
+      .replace("<", "&lt")
+      .replace(">", "&gt")}</textarea></td>`;
+    table += `</tr>`;
+  }
+  table += "</table>";
+  return table;
+}
+
+function generateUpsertionErrorTable(data) {
+  let table = "<table>";
+  table += "<tr><th>URL</th><th>Error Message</th></tr>";
+
+  for (const item of data) {
+    table += `<tr>`;
+    table += `<td style="max-width:300px"><p><a href="${item}" target='_blank'>${item}</a></p></td>`;
+    table += `</tr>`;
+  }
+  table += "</table>";
+  return table;
+}
+
+function showResult(resultPane, result) {
+  resultPane.innerHTML = "";
+  if (result.hasOwnProperty("error")) {
+    resultPane.innerHTML += "<h3>Error occurred</h3>";
+    resultPane.innerHTML += "<span class='result-attr'>Message</span>";
+    resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
+    resultPane.innerHTML += "<span class='result-attr'>Status Code</span>";
+    resultPane.innerHTML += `<p class='result-msg'>${result.status_code}</p>`;
+  } else {
+    resultPane.innerHTML += "<h3>Success</h3>";
+    resultPane.innerHTML += "<span class='result-attr'>Message</span>";
+    resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
+    resultPane.innerHTML += generateResultTable(result["result"]);
+  }
+  if (
+    result.hasOwnProperty("document_parse_error_url") &&
+    result["document_parse_error_url"].length > 0
+  ) {
+    resultPane.innerHTML += "<h3>Errors while parsing documents</h3>";
+    resultPane.innerHTML += generateParseErrorTable(
+      result["document_parse_error_url"]
+    );
+  }
+
+  if (
+    result.hasOwnProperty("unsuccessful_upsertions") &&
+    result["unsuccessful_upsertions"].length > 0
+  ) {
+    resultPane.innerHTML +=
+      "<h3>Unsuccessful upsertions. Insert URLs again </h3>";
+    resultPane.innerHTML += generateParseErrorTable(
+      result["unsuccessful_upsertions"]
+    );
+  }
+}
+
 document
   .getElementById("insert-button")
   .addEventListener("click", function (event) {
@@ -73,22 +138,10 @@ document
     })
       .then((response) => response.json())
       .then((data) => {
-        var result = data;
+        console.log(data);
+        const result = data;
         let resultPane = document.getElementById("result-pane-insert");
-        resultPane.innerHTML = "";
-        if (result.hasOwnProperty("error")) {
-          resultPane.innerHTML += "<h3>Error occurred</h3>";
-          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
-          resultPane.innerHTML +=
-            "<span class='result-attr'>Status Code</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.status_code}</p>`;
-        } else {
-          resultPane.innerHTML += "<h3>Success</h3>";
-          resultPane.innerHTML += "<span class='result-attr'>Message</span>";
-          resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
-          resultPane.innerHTML += generateResultTable(result["result"]);
-        }
+        showResult(resultPane, result);
       })
       .catch((error) => {
         console.error(error);

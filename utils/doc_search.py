@@ -47,29 +47,43 @@ class DocumentSearch:
                    for i in range(0, len(arr), batch_size)]
         return batches
 
-    def upsert_batchs(self, ids, payloads, vectors):
+    def upsert_batchs(self, ids, payloads, vectors, doc_chunk_idx):
         batch_size = 25
         ids = self.batched(ids, batch_size)
         payloads = self.batched(payloads, batch_size)
         vectors = self.batched(vectors, batch_size)
-        for i in range(len(ids)):
-            print("Upserting batch", i+1)
-            self.qdrant_client.upsert(
-                collection_name=f"{self.collection_name}",
-                points=models.Batch(
-                    ids=ids[i],
-                    payloads=payloads[i],
-                    vectors=vectors[i]
-                ),
-            )
-            print("Upserted batch", i+1)
+        batch_num = len(ids)
+        current_idx = 0
+        completed_chunks = 0
+        for i in range(batch_num):
+            try:
+                print("Upserting batch", i+1)
+                self.qdrant_client.upsert(
+                    collection_name=f"{self.collection_name}",
+                    points=models.Batch(
+                        ids=ids[i],
+                        payloads=payloads[i],
+                        vectors=vectors[i]
+                    ),
+                )
+                completed_chunks += len(ids[i])
+                while (completed_chunks >= doc_chunk_idx[current_idx].get("r", 1000000000)):
+                    current_idx += 1
+                print("Upserted batch", i+1)
+            except Exception as e:
+                print(e)
+                return current_idx
+        return current_idx
 
     def insert_doc_batch(self, docs, credentials, user="unknown", operation="insert"):
         try:
             print("Getting document chunks for batch request from user :", user)
-            data, base_urls = get_chunks_batch(docs, credentials, user)
-            # print(json.dumps(data, indent=4))
-            # print(len(data))
+            data, base_urls, document_parse_error_url, doc_chunk_idx = get_chunks_batch(
+                docs, credentials, user)
+            print(len(data))
+            print(json.dumps(base_urls, indent=4))
+            print(json.dumps(document_parse_error_url, indent=4))
+            print(json.dumps(doc_chunk_idx, indent=4))
             # return []
             if len(data):
                 print("Deleting docs")
@@ -99,7 +113,12 @@ class DocumentSearch:
                     payloads.append(chunk["payload"])
                 print("Encoded docs")
                 print("Upserting docs")
-                self.upsert_batchs(ids, payloads, vectors)
+                upserted_till = self.upsert_batchs(
+                    ids, payloads, vectors, doc_chunk_idx)
+                print(upserted_till)
+                unsuccessful_docs = []
+                while upserted_till < len(doc_chunk_idx):
+                    unsuccessful_docs.append(doc_chunk_idx["url"])
                 print("Upserted docs")
 
                 records = []
@@ -145,12 +164,19 @@ class DocumentSearch:
 
                 self.doc_record.insert_entry(records, operation=operation)
                 resultObj = {
-                    "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results}
+                    "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results,
+                    "unsuccessful_upsertions": unsuccessful_docs,
+                    "document_parse_error_url": document_parse_error_url
+                }
                 print(json.dumps(resultObj, indent=4))
 
                 return resultObj
             else:
-                raise Exception("Document(s) have no headings.")
+                resultObj = {
+                    "error": f"", "message": "Document(s) have no headings.",
+                    "document_parse_error_url": document_parse_error_url
+                }
+                return resultObj
         except Exception as e:
             print(e)
             raise e

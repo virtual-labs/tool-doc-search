@@ -193,13 +193,16 @@ def fetch_google_doc(doc_id):
 
 
 def fetch_google_doc_private(doc_id, credentials):
-    # url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
-    # response = requests.get(url)
-    service = build('drive', 'v3', credentials=credentials)
-    request = service.files().export(fileId=doc_id, mimeType='text/html')
-    response = request.execute()
+    url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+    response = requests.get(url, headers={
+        "Authorization": f"Bearer {credentials.token}"
+    })
+    if response.status_code == 404:
+        raise NotFoundException("Document not found. Invalid document link")
+    elif response.status_code == 401:
+        raise NotFoundException("Unauthorized access. Invalid credentials")
     print(f"Fetching markdown from google doc with id {doc_id}")
-    return convert_to_markdown(response.decode('utf-8'))
+    return convert_to_markdown(response.content)
 
 
 def fetch_google_sheet_private(doc_id, credentials, user, page_title=""):
@@ -836,6 +839,8 @@ def get_chunks_batch(docs, credentials, user):
     try:
         chunks = []
         base_urls = []
+        document_parse_error_url = []
+        doc_chunk_idx = []
         for idx, doc in enumerate(docs):
             try:
                 print(
@@ -887,19 +892,25 @@ def get_chunks_batch(docs, credentials, user):
                     point["payload"]["accessibility"] = "public"
                     chunk = [point]
 
+                l = len(chunks)
                 for ch in chunk:
                     chunks.append(ch)
+
+                doc_chunk_idx.append(
+                    {"url": doc["url"], "l": l, "r": len(chunks)})
 
                 base_urls.append(doc["url"])
 
             except Exception as e:
                 print(e)
-                raise Exception(
-                    f"Error occurred while parsing document {idx+1}, {str(e)}")
+                document_parse_error_url.append(
+                    {"url": doc["url"], "msg": str(e)})
+                # raise Exception(
+                #     f"Error occurred while parsing document {idx+1}, {str(e)}")
 
         print(f"Total document chunks generated {len(chunks)}")
 
-        return chunks, base_urls
+        return chunks, base_urls, document_parse_error_url, doc_chunk_idx
 
     except Exception as e:
         raise e
