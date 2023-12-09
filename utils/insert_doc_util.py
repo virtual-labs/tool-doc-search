@@ -12,9 +12,9 @@ def insert_document(link, document_type, credentials, name, doc_search):
                  "page_title": chunks[0]["payload"]["page_title"] if len(chunks) else "No title",
                  "accessibility": chunks[0]["payload"]["accessibility"]})
     except CustomException as e:
-        return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
+        return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code, "err": True})
     except Exception as e:
-        return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
+        return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500, "err": True})
 
 
 def insert_document_batch(docs, credentials, name, doc_search, operation="insert"):
@@ -23,6 +23,6 @@ def insert_document_batch(docs, credentials, name, doc_search, operation="insert
             docs=docs, credentials=credentials, user=name, operation=operation)
         return result
     except CustomException as e:
-        return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code})
+        return ({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code, "err": True})
     except Exception as e:
-        return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500})
+        return ({'error': 'An unexpected error occurred', 'message': str(e), 'status_code': 500, "err": True})

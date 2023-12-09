@@ -15,14 +15,11 @@ function generateResultTable(data) {
 
 function generateParseErrorTable(data) {
   let table = "<table>";
-  table += "<tr><th>URL</th><th>Error Message</th></tr>";
+  table += "<tr><th>URL</th></tr>";
 
   for (const item of data) {
     table += `<tr>`;
-    table += `<td style="max-width:300px"><p><a href="${item.url}" target='_blank'>${item.url}</a></p></td>`;
-    table += `<td><textarea rows="4" cols="50">${item.msg
-      .replace("<", "&lt")
-      .replace(">", "&gt")}</textarea></td>`;
+    table += `<td><p><a href="${item}" target='_blank'>${item}</a></p></td>`;
     table += `</tr>`;
   }
   table += "</table>";
@@ -51,16 +48,25 @@ function showResult(resultPane, result) {
     resultPane.innerHTML += "<span class='result-attr'>Status Code</span>";
     resultPane.innerHTML += `<p class='result-msg'>${result.status_code}</p>`;
   } else {
-    resultPane.innerHTML += "<h3>Success</h3>";
+    if (
+      (result.hasOwnProperty("document_parse_error_url") &&
+        result["document_parse_error_url"].length > 0) ||
+      (result.hasOwnProperty("unsuccessful_upsertions") &&
+        result["unsuccessful_upsertions"].length > 0)
+    ) {
+      resultPane.innerHTML += "<h3>Errors occurred</h3>";
+    } else resultPane.innerHTML += "<h3>Success</h3>";
     resultPane.innerHTML += "<span class='result-attr'>Message</span>";
-    resultPane.innerHTML += `<p class='result-msg'>${result.message}</p>`;
+    resultPane.innerHTML += `<p class='result-msg'>${result.message
+      .replace("<", "&lt")
+      .replace(">", "&gt")}</p>`;
     resultPane.innerHTML += generateResultTable(result["result"]);
   }
   if (
     result.hasOwnProperty("document_parse_error_url") &&
     result["document_parse_error_url"].length > 0
   ) {
-    resultPane.innerHTML += "<h3>Errors while parsing documents</h3>";
+    resultPane.innerHTML += "<h4>Errors while parsing documents</h4>";
     resultPane.innerHTML += generateParseErrorTable(
       result["document_parse_error_url"]
     );
@@ -71,7 +77,7 @@ function showResult(resultPane, result) {
     result["unsuccessful_upsertions"].length > 0
   ) {
     resultPane.innerHTML +=
-      "<h3>Unsuccessful upsertions. Insert URLs again </h3>";
+      "<h4>Unsuccessful upsertions. Insert URLs again </h4>";
     resultPane.innerHTML += generateParseErrorTable(
       result["unsuccessful_upsertions"]
     );
@@ -136,7 +142,15 @@ document
       },
       body: JSON.stringify({ action: "insert", data: postData }),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.ok) {
+          console.log("Status Code:", response.status);
+          return response.json();
+        } else {
+          console.error("Error Status Code:", response.status);
+          throw new Error(response.message);
+        }
+      })
       .then((data) => {
         console.log(data);
         const result = data;
@@ -145,7 +159,7 @@ document
       })
       .catch((error) => {
         console.error(error);
-        alert("Error:", error);
+        alert("Error: " + JSON.stringify(error));
       })
       .finally(() => {
         document.getElementById("loader").style.visibility = "hidden";
@@ -155,9 +169,12 @@ document
 window.onclick = function (event) {
   let modal = document.getElementById("id01");
   let modal1 = document.getElementById("id02");
+  let modal2 = document.getElementById("id03");
   if (event.target == modal) {
     modal.style.display = "none";
   } else if (event.target == modal1) {
     modal1.style.display = "none";
+  } else if (event.target == modal2) {
+    modal2.style.display = "none";
   }
 };

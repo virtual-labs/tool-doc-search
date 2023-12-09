@@ -160,14 +160,14 @@ def protected_area():
                     return jsonify(result)
 
                 else:
-                    return jsonify({"message": "Invalid action"})
+                    return jsonify({"message": "Invalid action", "error": True})
             except BadRequestException as e:
-                return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
+                return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}.", "error": True}), 500
 
         return render_template('update_document_page.html', result=result, user_name=session["name"])
 
     except Exception as e:
-        return jsonify({"message": f"{str(e)}."}), 500
+        return jsonify({"message": f"{str(e)}.", "err": True}), 500
 
 
 @insert_doc.route("/get_docs", methods=['GET'])
@@ -179,7 +179,7 @@ def get_docs():
         print(search_query, page)
         return jsonify(doc_record.get_docs(search_query, page))
     except Exception as e:
-        return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}."}), 500
+        return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}.", "err": True}), 500
 
 
 @insert_doc.route("/test", methods=['GET', 'POST'])

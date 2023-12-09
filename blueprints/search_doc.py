@@ -77,7 +77,7 @@ def index():
 
     except CustomException as e:
         print(e)
-        return jsonify({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code}), e.status_code
+        return jsonify({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code, "err": True}), e.status_code
     except Exception as e:
         print(e)
-        return jsonify({'error': 'An unexpected error occurred', 'message': str(e)}), 500
+        return jsonify({'error': 'An unexpected error occurred', 'message': str(e), "err": True}), 500

@@ -1,6 +1,12 @@
 let total_recs = 0;
 
-function generateTable(data) {
+let page_object = {
+  search_query: "",
+  page: 1,
+  page_limit: 0,
+};
+
+function generateMainTable(data) {
   let table = "<table>";
   table +=
     "<tr><th><input type='checkbox' name='selected' id='clearSelection'></th><th>Document</th><th></th><th>Type</th><th>Accessibility</th><th>Last updated</th><th>Updated By</th></tr>";
@@ -23,12 +29,6 @@ function generateTable(data) {
   table += "</table>";
   return table;
 }
-
-let page_object = {
-  search_query: "",
-  page: 1,
-  page_limit: 0,
-};
 
 async function load_docs(text, page) {
   try {
@@ -85,7 +85,8 @@ async function load_docs(text, page) {
     <span style='float:right'>${total_recs} entries</span>
       `;
 
-    resultPane.innerHTML += generateTable(data);
+    resultPane.innerHTML += generateMainTable(data);
+
     document
       .getElementById("clearSelection")
       .addEventListener("click", function (evt) {
@@ -101,14 +102,13 @@ async function load_docs(text, page) {
       });
   } catch (err) {
     console.log(err);
-    alert("Error:", err);
+    alert("Error: " + err);
   } finally {
     document.getElementById("loader").style.visibility = "hidden";
   }
 }
-load_docs(page_object.search_query, page_object.page);
 
-document.getElementById("postButton").addEventListener("click", function () {
+document.getElementById("updateButton").addEventListener("click", function () {
   let selectedURLs = [];
 
   let checkboxes = document.querySelectorAll('input[type="checkbox"]');
@@ -182,12 +182,16 @@ document.getElementById("postButton").addEventListener("click", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      if (data["error"]) {
-        alert(data["error"] + " " + data["message"]);
-      } else alert("Documents updated successfully.");
+      console.log(data);
+      document.getElementById("id03").style.display = "block";
+      let resultPane = document.getElementById("result-pane-update");
+      showResult(resultPane, data);
+      // if (data["error"]) {
+      //   alert(data["error"] + " " + data["message"]);
+      // } else alert("Documents updated successfully.");
     })
     .catch((error) => {
-      alert("Error:", error);
+      alert("Error: " + error);
     })
     .finally(() => {
       document.getElementById("loader").style.visibility = "hidden";
@@ -299,7 +303,7 @@ document.getElementById("deleteButton").addEventListener("click", function () {
     })
     .catch((error) => {
       console.log(error);
-      alert("Error:", error);
+      alert("Error: " + error);
     })
     .finally(() => {
       document.getElementById("loader").style.visibility = "hidden";
@@ -333,3 +337,5 @@ document
     event.preventDefault();
     document.getElementById("id02").style.display = "block";
   });
+
+load_docs(page_object.search_query, page_object.page);

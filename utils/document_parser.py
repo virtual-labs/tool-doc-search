@@ -828,6 +828,7 @@ def get_doc_urls_from_drive(folder_url, credentials):
                             )
                 return urls, name, accessibility
         else:
+            print("Invalid drive folder")
             raise Exception("Invalid drive folder id")
     else:
         raise Exception("Invalid drive folder")

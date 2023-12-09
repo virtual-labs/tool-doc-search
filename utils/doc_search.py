@@ -58,6 +58,8 @@ class DocumentSearch:
         for i in range(batch_num):
             try:
                 print("Upserting batch", i+1)
+                # if i == 0:
+                #     raise Exception("write operation timed out")
                 self.qdrant_client.upsert(
                     collection_name=f"{self.collection_name}",
                     points=models.Batch(
@@ -116,32 +118,41 @@ class DocumentSearch:
                 upserted_till = self.upsert_batchs(
                     ids, payloads, vectors, doc_chunk_idx)
                 print(upserted_till)
+
                 unsuccessful_docs = []
                 while upserted_till < len(doc_chunk_idx):
-                    unsuccessful_docs.append(doc_chunk_idx["url"])
+                    unsuccessful_docs.append(
+                        doc_chunk_idx[upserted_till].get("url"))
+                    upserted_till += 1
+
                 print("Upserted docs")
 
                 records = []
                 results = []
-                results.append({
-                    "page_title": data[0]["payload"]["page_title"],
-                    "base_url": data[0]["payload"]["base_url"],
-                    "sections": 1,
-                    "accessibility": data[0]["payload"]["accessibility"]
-                })
                 current_time = datetime.datetime.now()
-                records.append({
-                    "page_title": data[0]["payload"]["page_title"],
-                    "base_url": data[0]["payload"]["base_url"],
-                    "accessibility": data[0]["payload"]["accessibility"],
-                    "type": data[0]["payload"]["type"],
-                    "created_by": user,
-                    "created_at": current_time,
-                    "updated_by": user,
-                    "last_updated": current_time
-                })
+                if len(unsuccessful_docs) and unsuccessful_docs[0] == data[0]["payload"]["base_url"]:
+                    pass
+                else:
+                    results.append({
+                        "page_title": data[0]["payload"]["page_title"],
+                        "base_url": data[0]["payload"]["base_url"],
+                        "sections": 1,
+                        "accessibility": data[0]["payload"]["accessibility"]
+                    })
+                    records.append({
+                        "page_title": data[0]["payload"]["page_title"],
+                        "base_url": data[0]["payload"]["base_url"],
+                        "accessibility": data[0]["payload"]["accessibility"],
+                        "type": data[0]["payload"]["type"],
+                        "created_by": user,
+                        "created_at": current_time,
+                        "updated_by": user,
+                        "last_updated": current_time
+                    })
 
                 for i in range(1, len(data)):
+                    if len(unsuccessful_docs) and unsuccessful_docs[0] == data[i]["payload"]["base_url"]:
+                        break
                     if data[i]["payload"]["base_url"] == results[-1]["base_url"]:
                         results[-1]["sections"] += 1
                     else:
@@ -221,7 +232,7 @@ class DocumentSearch:
                 delete_document_chunks(urls=urls, qdrant_client=self.qdrant_client, collection_name=self.collection_name,
                                        record_collection_name=self.doc_record.collection_name, models=models)
             else:
-                raise Exception("No valid document.")
+                return ("No valid document.")
         except Exception as e:
             raise e
 

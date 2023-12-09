@@ -98,7 +98,7 @@ class DocumentRecord:
                 print("Inserted new record")
                 return "success"
             else:
-                raise Exception("No valid document.")
+                return ("No valid document.")
         except Exception as e:
             print(e)
             raise e
@@ -170,7 +170,7 @@ class DocumentRecord:
                 print("Inserted new folder record")
                 return "success"
             else:
-                raise Exception("No valid document.")
+                return ("No valid document.")
         except Exception as e:
             print(e)
             raise e

@@ -27,12 +27,17 @@ document
       .then((data) => {
         console.log(data);
         const result = data;
+        if (data.err) {
+          alert("Error: " + data.message);
+          return;
+        }
         let resultPane = document.getElementById("result-pane-folder-insert");
+
         showResult(resultPane, result);
       })
       .catch((error) => {
         console.error(error);
-        alert("Error:", error);
+        alert("Error: " + error);
       })
       .finally(() => {
         document.getElementById("loader").style.visibility = "hidden";
