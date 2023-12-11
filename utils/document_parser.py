@@ -466,7 +466,7 @@ def get_formatted_google_url(doc_id, type):
     return f'https://drive.google.com/file/d/{doc_id}'
 
 
-def get_github_accessibility(raw_url):
+def get_github_accessibility_with_content(raw_url):
     access_token = os.getenv("GITHUB_ACCESS_TOKEN")
     headers = {'Authorization': f'token {access_token}'}
     response = requests.get(raw_url)
@@ -480,7 +480,7 @@ def get_github_accessibility(raw_url):
             raise NotFoundException(
                 "Document not found. Invalid document link")
     else:
-        raise NotFoundException("Document not found. Invalid document link")
+        raise Exception("Error occurred while fetching document")
 
 
 def get_chunks_from_md_github(url, user, page_title=""):
@@ -492,7 +492,8 @@ def get_chunks_from_md_github(url, user, page_title=""):
 
     print(f"Fetching markdown from {github_raw_url}")
 
-    access, markdown_content = get_github_accessibility(github_raw_url)
+    access, markdown_content = get_github_accessibility_with_content(
+        github_raw_url)
 
     print(f"Markdown fetched from {github_raw_url}")
     data = get_chunks_from_markdown(
@@ -511,7 +512,8 @@ def get_chunks_from_org_github(url, user, page_title=""):
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     print(f"Fetching ORG from {github_raw_url}")
-    access, markdown_content = get_github_accessibility(github_raw_url)
+    access, markdown_content = get_github_accessibility_with_content(
+        github_raw_url)
     print(f"ORG fetched from {github_raw_url}")
     data = get_chunks_from_org(
         markdown_content, url, "org", user, page_title)
@@ -529,7 +531,7 @@ def get_chunks_from_github(url, user, page_title=""):
                                  "https://raw.githubusercontent.com").replace("http://github.com",
                                                                               "https://raw.githubusercontent.com").replace("/blob/", "/")
     print(f"Fetching GitHub content from {github_raw_url}")
-    access, content = get_github_accessibility(github_raw_url)
+    access, content = get_github_accessibility_with_content(github_raw_url)
     print(f"Content fetched from {github_raw_url}")
     newdata = []
     data = []
