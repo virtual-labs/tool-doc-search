@@ -63,6 +63,64 @@ The design of the Virtual Labs Document Search Tool is driven by several key tec
 
 The choice of using Qdrant, a vector similarity search engine, for storing and querying document vectors is a fundamental design decision. Qdrant provides efficient similarity searches, enabling fast and accurate document retrieval based on vector representations. This decision ensures optimal performance for search queries across a large collection of documents.
 
+### **String match scoring for better results**
+
+The Search page employs a string match scoring mechanism to improve the relevance of search results. Results from the Qdrant vector database are ranked based on the number of occurrences of the search query in the document. This scoring mechanism is implemented in the following ways:
+
+```javascript
+// search-page-react/src/utils/utils.js
+
+const countToWeightFunction = (cnt) => {
+  return 5 * Math.log2(1 + 0.1 * cnt);
+};
+
+const getRankedResult = (results, search_query) => {
+  search_query = search_query.trim().toLowerCase();
+  if (!search_query) return results;
+
+  const searchWords = getSubWords(search_query);
+  const rankedResults = [];
+
+  for (let result of results) {
+    const lowerCaseResult = result?.text?.toLowerCase();
+    const lowerCaseHeading = result.heading.toLowerCase();
+
+    let score = 0;
+    for (let word of searchWords) {
+      const resultCnt = countSubstringOccurrences(
+        lowerCaseResult,
+        word.sentence
+      );
+      const headingCnt = countSubstringOccurrences(
+        lowerCaseHeading,
+        word.sentence
+      );
+      score +=
+        word.score *
+        (result.type === "xlsx"
+          ? !resultCnt
+            ? 0
+            : countToWeightFunction(1)
+          : countToWeightFunction(resultCnt));
+      score +=
+        word.score *
+        countToWeightFunction(headingCnt) *
+        countToWeightFunction(10);
+    }
+
+    rankedResults.push({
+      ...result,
+      rank: score + result.score * 100,
+      ascore: score,
+    });
+  }
+
+  rankedResults.sort((a, b) => b.rank - a.rank);
+  // console.log(rankedResults);
+  return rankedResults;
+};
+```
+
 ### **Google OAuth for Authentication**
 
 To secure access to the Insert/Update Page, the Document Search Tool integrates Google OAuth for authentication. This decision leverages the robust authentication mechanisms provided by Google, ensuring that only authorized users from the Virtual Labs organization can interact with the authenticated components of the tool.
