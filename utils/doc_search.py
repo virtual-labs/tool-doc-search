@@ -68,10 +68,10 @@ class DocumentSearch:
                         vectors=vectors[i]
                     ),
                 )
+                print("Upserted batch", i+1)
                 completed_chunks += len(ids[i])
                 while (completed_chunks >= doc_chunk_idx[current_idx].get("r", 1000000000)):
                     current_idx += 1
-                print("Upserted batch", i+1)
             except Exception as e:
                 print(e)
                 return current_idx
@@ -173,6 +173,9 @@ class DocumentSearch:
                             "last_updated": current_time
                         })
 
+                records = list(filter(lambda record: record.get(
+                    "type", "dir") != "dir", records))
+
                 self.doc_record.insert_entry(records, operation=operation)
                 resultObj = {
                     "message": f"Document{'s' if len(results) > 1 else ''} upserted successfully", "result": results,
@@ -192,18 +195,31 @@ class DocumentSearch:
             print(e)
             raise e
 
-    def insert_drive_folder(self, folderUrl, credentials, user="unknown", operation="insert"):
+    def insert_drive_folder(self, folder, credentials, user="unknown", operation="insert"):
         try:
+            folderUrl = folder.get("folderURL")
+
             urls, name, accessibility = get_doc_urls_from_drive(
                 folderUrl, credentials)
-            print(json.dumps(urls, indent=4))
-            print(len(urls))
+
+            if not folder.get("insertFiles", True):
+                urls = []
+
             records = []
             current_time = datetime.datetime.now()
             match = re.search(r'/folders/([a-zA-Z0-9_-]+)', folderUrl)
             if match:
                 doc_id = match.group(1)
                 folderUrl = get_formatted_google_url(doc_id, "folder")
+
+            name = folder.get("folderName", None) if folder.get(
+                "folderName", None) else name
+
+            urls.append({"url": folderUrl,
+                         "type": "dir",
+                         "accessibility": accessibility,
+                         "page_title": name, })
+
             records.append({
                 "folder_name": name,
                 "base_url": folderUrl,
@@ -215,8 +231,13 @@ class DocumentSearch:
                 "files": urls,
                 "dir": 1
             })
+            print(records)
             self.doc_record.insert_folder_entry(records, operation=operation)
             self.doc_record.insert_entry(records, operation=operation)
+
+            print(json.dumps(urls, indent=4))
+            print(len(urls))
+
             return self.insert_doc_batch(
                 docs=urls, credentials=credentials, user=user, operation="insert")
         except Exception as e:

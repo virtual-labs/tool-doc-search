@@ -882,8 +882,16 @@ def get_chunks_batch(docs, credentials, user):
                 elif doc["type"] == "link":
                     print("Generating chunk for unknown doc")
                     point = get_point(doc["page_title"], doc["page_title"],
-                                      doc["page_title"], doc["url"], "link", doc["url"], user)
+                                      doc["page_title"], doc["url"], doc["type"], doc["url"], user)
                     point["payload"]["accessibility"] = "public"
+                    chunk = [point]
+
+                elif doc["type"] == "dir":
+                    print("Generating chunk for unknown doc")
+                    point = get_point(doc["page_title"], doc["page_title"],
+                                      doc["page_title"], doc["url"], doc["type"], doc["url"], user, src="drive")
+                    point["payload"]["accessibility"] = doc.get(
+                        "accessibility", "public")
                     chunk = [point]
 
                 if (len(chunk) == 0):

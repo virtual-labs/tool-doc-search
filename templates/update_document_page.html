@@ -45,7 +45,21 @@
             id="folder-url-input"
             class="url-input"
             placeholder="Folder URL"
+            required
           />
+          <input
+            type="text"
+            id="folder-name-input"
+            class="page-title-input"
+            style="width: 40%"
+            placeholder="(Optional) Folder Name"
+          />
+          <div style="display: inline">
+            <label for="myCheckbox"
+              >Insert files also
+              <input type="checkbox" id="myCheckbox" name="myCheckbox" checked
+            /></label>
+          </div>
           <input id="insert-folder-button" type="submit" value="Submit" />
         </form>
         <div id="result-pane-folder-insert" class="result-pane"></div>

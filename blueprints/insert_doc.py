@@ -154,7 +154,7 @@ def protected_area():
                     else:
                         op = "insert" if req["action"] == "folder-insert" else "update"
                         result = doc_search.insert_drive_folder(
-                            folderUrl=req["data"][0], credentials=credentials,  user=session["name"], operation=op)
+                            folder=req["data"][0], credentials=credentials,  user=session["name"], operation=op)
 
                     print("got it")
                     return jsonify(result)

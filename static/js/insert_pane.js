@@ -15,11 +15,12 @@ function generateResultTable(data) {
 
 function generateParseErrorTable(data) {
   let table = "<table>";
-  table += "<tr><th>URL</th></tr>";
+  table += "<tr><th>URL</th><th>Error message</th></tr>";
 
   for (const item of data) {
     table += `<tr>`;
-    table += `<td><p><a href="${item}" target='_blank'>${item}</a></p></td>`;
+    table += `<td><p><a href="${item.url}" target='_blank'>${item.url}</a></p></td>`;
+    table += `<td><textarea rows="4" cols="50">${item.msg}</textarea></td>`;
     table += `</tr>`;
   }
   table += "</table>";
@@ -28,7 +29,7 @@ function generateParseErrorTable(data) {
 
 function generateUpsertionErrorTable(data) {
   let table = "<table>";
-  table += "<tr><th>URL</th><th>Error Message</th></tr>";
+  table += "<tr><th>URL</th><th>Document URL</th></tr>";
 
   for (const item of data) {
     table += `<tr>`;
@@ -78,7 +79,7 @@ function showResult(resultPane, result) {
   ) {
     resultPane.innerHTML +=
       "<h4>Unsuccessful upsertions. Insert URLs again </h4>";
-    resultPane.innerHTML += generateParseErrorTable(
+    resultPane.innerHTML += generateUpsertionErrorTable(
       result["unsuccessful_upsertions"]
     );
   }

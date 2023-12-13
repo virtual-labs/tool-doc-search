@@ -29,6 +29,7 @@ const DOCUMENT_TYPES = [
   // { type: "drive", title: "Google Drive File" },
   { type: "link", title: "Link" },
   { type: "pdf", title: "PDF file" },
+  { type: "dir", title: "Google Drive Folder" },
 ];
 
 const ACCESSIBILITY_TYPES = [

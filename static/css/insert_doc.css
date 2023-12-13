@@ -342,6 +342,16 @@ input[type="checkbox"] {
   height: 20px;
 }
 
+#myCheckboxLabel {
+  display: block;
+  margin-bottom: 10px;
+}
+
+#myCheckbox {
+  display: inline;
+  margin-right: 5px;
+}
+
 .page_title_search_form {
   display: inline;
 

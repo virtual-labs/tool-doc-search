@@ -5,14 +5,21 @@ document
     let folderURL = document.getElementById("folder-url-input").value;
     folderURL = folderURL.trim();
 
+    let folderName = document.getElementById("folder-name-input").value.trim();
+
+    let check = document.getElementById("myCheckbox").checked;
+
     if (folderURL === "") {
       alert("Please specify folder URL");
       return;
     }
 
-    document.getElementById("loader").style.visibility = "visible";
+    var postData = [
+      { folderURL: folderURL, folderName: folderName, insertFiles: check },
+    ];
 
-    var postData = [folderURL];
+    // alert(JSON.stringify(postData));
+    // return;
 
     document.getElementById("loader").style.visibility = "visible";
 

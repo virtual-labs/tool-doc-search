@@ -165,7 +165,9 @@ document.getElementById("updateButton").addEventListener("click", function () {
     alert("No records selected.");
     return;
   }
-  let postData = isDirSelected ? [selectedURLs[0].url] : selectedURLs;
+  let postData = isDirSelected
+    ? [{ folderURL: selectedURLs[0].url }]
+    : selectedURLs;
   let body = {
     action: isDirSelected ? "folder-update" : "update",
     data: postData,
@@ -234,6 +236,7 @@ document.getElementById("deleteButton").addEventListener("click", function () {
   checkboxes.forEach(function (checkbox, index) {
     if (checkbox.checked) {
       let row = checkbox.closest("tr");
+      if (!row) return;
       let documentCell = row.cells[1];
       let typeCell = row.cells[2];
       if (documentCell.querySelector("a") === null) return;
@@ -274,6 +277,11 @@ document.getElementById("deleteButton").addEventListener("click", function () {
   if (confirm(text) == false) {
     return;
   }
+  // alert(JSON.stringify(selectedURLs));
+  // alert(JSON.stringify(urlTypes));
+  // alert(isDirSelected);
+  // return;
+
   if (isDirSelected) {
     let dirMessage =
       "You have selected a directory. All files present inside it at the time of insertion will be removed. Are you sure?";

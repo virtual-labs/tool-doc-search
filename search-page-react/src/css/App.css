@@ -569,7 +569,7 @@ button,
 
 label {
   margin-bottom: 5px;
-  font-weight: bold;
+  /* font-weight: bold; */
   display: block;
 }
 
@@ -2907,6 +2907,11 @@ textarea.w-select {
 .file-type.org,
 .doctype-view-box.org {
   background-color: #5fb09b;
+}
+
+.file-type.dir,
+.doctype-view-box.dir {
+  background-color: #6b6b6b;
 }
 
 .file-type.xlsx,
