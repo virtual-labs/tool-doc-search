@@ -70,5 +70,5 @@ The combination of these features ensures a comprehensive and user-centric exper
 
 | DOCUMENT                                   | DESCRIPTION                                                                                                   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| [User documnent](./docs/user_doc.md)       | A comprehensive documentation for users of Virtual Labs Document Search                                       |
+| [User document](./docs/user_doc.md)       | A comprehensive documentation for users of Virtual Labs Document Search                                       |
 | [Developer document](./docs/tech_guide.md) | A comprehensive development documentation for developers working on the Virtual Labs Document Search project. |
