@@ -33,7 +33,7 @@ function generateMainTable(data) {
 async function load_docs(text, page) {
   try {
     document.getElementById("loader").style.visibility = "visible";
-    url = `/insert_doc/get_docs?search_query=${text}&page=${page}`;
+    url = INDEX_URL + `/insert_doc/get_docs?search_query=${text}&page=${page}`;
     console.log(url);
     const response = await fetch(url);
 
@@ -116,6 +116,7 @@ document.getElementById("updateButton").addEventListener("click", function () {
   checkboxes.forEach(function (checkbox, index) {
     if (checkbox.checked) {
       let row = checkbox.closest("tr");
+      if (!row) return;
       let documentCell = row.cells[1];
       if (documentCell.querySelector("a") === null) return;
       let typeCell = row.cells[3];
@@ -175,7 +176,7 @@ document.getElementById("updateButton").addEventListener("click", function () {
   // alert(JSON.stringify(body));
   // return;
   document.getElementById("loader").style.visibility = "visible";
-  fetch("/insert_doc/protected_area", {
+  fetch(INDEX_URL + "/insert_doc/protected_area/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -297,7 +298,7 @@ document.getElementById("deleteButton").addEventListener("click", function () {
 
   // return;
   document.getElementById("loader").style.visibility = "visible";
-  fetch("/insert_doc/protected_area", {
+  fetch(INDEX_URL + "/insert_doc/protected_area/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

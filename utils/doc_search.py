@@ -18,6 +18,7 @@ class DocumentSearch:
         self.qdrant_client = QdrantClient(
             url=url,
             api_key=api_key,
+            timeout=20
         )
 
         self.doc_record = doc_record
@@ -48,7 +49,7 @@ class DocumentSearch:
         return batches
 
     def upsert_batchs(self, ids, payloads, vectors, doc_chunk_idx):
-        batch_size = 25
+        batch_size = 20
         ids = self.batched(ids, batch_size)
         payloads = self.batched(payloads, batch_size)
         vectors = self.batched(vectors, batch_size)

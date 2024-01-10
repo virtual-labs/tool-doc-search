@@ -15,6 +15,7 @@ class DocumentRecord:
         self.qdrant_client = QdrantClient(
             url=url,
             api_key=api_key,
+            timeout=20
         )
 
         self.collection_name = collection_name

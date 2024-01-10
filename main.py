@@ -1,7 +1,15 @@
+from flask_cors import CORS
+import uuid
+from utils.doc_info import is_valid_doc_type
+from utils.doc_instances import doc_search
+import json
+from dotenv import load_dotenv
+from error.CustomException import CustomException, BadRequestException
+from flask import Flask, request, jsonify, abort
 import os
 import pathlib
 import requests
-from flask import session, redirect, request, Blueprint, render_template, jsonify
+from flask import session, redirect, request, render_template, jsonify
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
@@ -9,10 +17,103 @@ import google.auth.transport.requests
 from error.CustomException import BadRequestException
 from utils.insert_doc_util import insert_document_batch
 from utils.doc_instances import doc_search, doc_record
-import json
+
+load_dotenv()
 
 
-insert_doc = Blueprint('insert_doc', __name__, url_prefix='/insert_doc')
+app = Flask(__name__)
+app.secret_key = 'db42f1f479b34801ae7fb2636ea57402'
+
+CORS(app, resources={r'/*': {'origins': '*'}})
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+@app.route('/')
+def index():
+    return "<h1>DocSearch API.</h1>"
+
+
+@app.route('/post_req', methods=['POST'])
+def index1():
+    data = request.json
+    return jsonify(data)
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return "<h1>Route doesn't exist</h1>", 404
+
+
+@app.route('/api/search', methods=['POST'])
+def search():
+    print("Getting Search request")
+    try:
+        limit = 10
+        thresh = 0.0
+        doc_filter = "Any"
+        src_filter = "Any"
+        acc_filter = "Any"
+        page_title_filter = ""
+
+        data = request.json
+
+        if "search_query" not in data:
+            raise BadRequestException("Please enter search query")
+
+        if (type(data["search_query"])) != str:
+            raise BadRequestException("search query must be string")
+
+        if "limit" in data:
+            if (type(data["limit"])) != int:
+                return BadRequestException("limit must be integer")
+            limit = data["limit"]
+
+        if "thresh" in data:
+            if (type(data["thresh"])) != float:
+                raise BadRequestException("thresh must be float")
+            thresh = data["thresh"]
+
+        if "doc_filter" in data:
+            doc_filter = data["doc_filter"]
+
+        if "src_filter" in data:
+            src_filter = data["src_filter"]
+
+        if "acc_filter" in data:
+            acc_filter = data["acc_filter"]
+
+        if "page_title_filter" in data:
+            if (type(data["page_title_filter"])) != str:
+                raise BadRequestException("page_title_filter  must be string")
+            page_title_filter = data["page_title_filter"]
+
+        print(json.dumps(data, indent=4))
+
+        result = doc_search.get_search_result(
+            search_query=data["search_query"],
+            limit=limit,
+            thresh=thresh,
+            doc_filter=doc_filter,
+            src_filter=src_filter,
+            acc_filter=acc_filter,
+            page_title_filter=page_title_filter,)
+
+        response = jsonify({"hits": len(result), "result": result})
+
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods',
+                             'DELETE, POST, GET, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers',
+                             'Content-Type, Authorization, X-Requested-With')
+
+        return response
+
+    except CustomException as e:
+        print(e)
+        return jsonify({'error': 'An error occurred', 'message': str(e), 'status_code': e.status_code, "err": True}), e.status_code
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'An unexpected error occurred', 'message': str(e), "err": True}), 500
 
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -20,7 +121,7 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 client_secrets_file = os.path.join(
-    pathlib.Path(__file__).parent, "../secrets/client_secret.json")
+    pathlib.Path(__file__).parent, "./secrets/client_secret.json")
 
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
@@ -41,19 +142,27 @@ def login_is_required(function):
         print("in wrapper", "google_id" not in session, session)
         if ("google_id" in session):
             print(session["google_id"])
-        if "google_id" not in session:
-            return redirect('/insert_doc/login')  # Authorization required
-        else:
+        # if "google_id" not in session:
+        #     return redirect('/insert_doc/login')  # Authorization required
+        # else:
+        #     return function()
+
+        if 'google_id' in session:
             return function()
+        authorization_url, state = flow.authorization_url()
+        session['state'] = state
+        session.modified = True
+        return redirect(authorization_url)
+
     return wrapper
 
 
-@insert_doc.route("/")
-def index():
+@app.route("/insert_doc")
+def insert_doc():
     return "<a href='/insert_doc/login'><button>Login</button></a>"
 
 
-@insert_doc.route("/login")
+@app.route("/insert_doc/login")
 def login():
     authorization_url, state = flow.authorization_url()
     session["state"] = state
@@ -61,13 +170,13 @@ def login():
     return redirect(authorization_url)
 
 
-@insert_doc.route("/callback")
+@app.route("/insert_doc/callback")
 def callback():
     flow.fetch_token(authorization_response=request.url)
     print(("state" in request.args))
     print(("state" in session))
-    # if not session["state"] == request.args["state"]:
-    #     abort(500)  # State does not match!
+    if not session["state"] == request.args["state"]:
+        abort(500)  # State does not match!
 
     credentials = flow.credentials
     request_session = requests.session()
@@ -86,7 +195,7 @@ def callback():
     return redirect("/insert_doc/protected_area")
 
 
-@insert_doc.route("/logout")
+@app.route("/insert_doc/logout")
 def logout():
     session.clear()
     print("logged out")
@@ -94,7 +203,7 @@ def logout():
     return redirect("/")
 
 
-@insert_doc.route("/protected_area/", methods=['GET', 'POST'])
+@app.route("/insert_doc/protected_area/", methods=['GET', 'POST'])
 @login_is_required
 def protected_area():
     try:
@@ -167,10 +276,13 @@ def protected_area():
         return render_template('update_document_page.html', result=result, user_name=session["name"])
 
     except Exception as e:
+        if (str(e) == "There is no access token for this session, did you call fetch_token?"):
+            session.clear()
+            return redirect("/insert_doc/login")
         return jsonify({"message": f"{str(e)}.", "err": True}), 500
 
 
-@insert_doc.route("/get_docs", methods=['GET'])
+@app.route("/insert_doc/get_docs", methods=['GET'])
 def get_docs():
     try:
         args = request.args
@@ -182,9 +294,6 @@ def get_docs():
         return jsonify({"message": f"<h1>Error occurred</h1> {str(e)}.", "err": True}), 500
 
 
-@insert_doc.route("/test", methods=['GET', 'POST'])
-def test():
-    try:
-        return render_template('update_document_page.html', result=None, user_name="unknown")
-    except Exception as e:
-        return f"<h1>Error occurred</h1> {str(e)}. Try to login again"
+if __name__ == '__main__':
+    # app.register_blueprint(insert_doc)
+    app.run(debug=True)

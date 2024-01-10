@@ -23,7 +23,7 @@ document
 
     document.getElementById("loader").style.visibility = "visible";
 
-    fetch("/insert_doc/protected_area", {
+    fetch(INDEX_URL + "/insert_doc/protected_area/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +43,7 @@ document
         showResult(resultPane, result);
       })
       .catch((error) => {
-        console.error(error);
+        console.log(error);
         alert("Error: " + error);
       })
       .finally(() => {

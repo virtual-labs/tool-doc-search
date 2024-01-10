@@ -695,6 +695,7 @@ def fetch_metadata_gdrive(doc_id):
     SCOPES = ['https://www.googleapis.com/auth/drive']
     SERVICE_ACCOUNT_FILE = os.path.join(
         pathlib.Path(__file__).parent, "../secrets/service-account-secret.json")
+    print("SAF", SERVICE_ACCOUNT_FILE)
     credentials = None
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -721,16 +722,18 @@ def fetch_metadata_gdrive(doc_id):
     return file_metadata
 
 
-def download_pdf(service, doc_id):
-    request = service.files().get_media(fileId=doc_id)
-    fh = io.BytesIO()
-    downloader = io.BytesIO(request.execute())
-    fh.write(downloader.read())
-    pdf_file_name = f'pdf_downloads/{uuid.uuid4().hex}.pdf'
-    with open(pdf_file_name, 'wb') as f:
-        f.write(fh.getvalue())
-    print(f"{pdf_file_name} file downloaded successfully.")
-    return pdf_file_name
+def download_pdf(service, doc_id, PDF_PATH):
+    try:
+        request = service.files().get_media(fileId=doc_id)
+        fh = io.BytesIO()
+        downloader = io.BytesIO(request.execute())
+        fh.write(downloader.read())
+        pdf_file_name = PDF_PATH
+        with open(pdf_file_name, 'wb') as f:
+            f.write(fh.getvalue())
+        print(f"{pdf_file_name} file downloaded successfully.")
+    except Exception as e:
+        raise e
 
 
 def delete_pdf(file_name):
@@ -749,10 +752,10 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
         meta_data = fetch_metadata_gdrive(
             doc_id)
 
-        pdf_name = meta_data.get("name").replace(
+        file_name = meta_data.get("name").replace(
             "-", " ").replace(".", " ").replace("pdf", "PDF")
 
-        page_title = page_title if page_title != "" else pdf_name
+        page_title = page_title if page_title != "" else file_name
 
         doc_type = meta_data.get("mimeType")
 
@@ -767,9 +770,11 @@ def get_chunks_from_gdrive(url, credentials, user, page_title=""):
             point["payload"]["accessibility"] = meta_data.get("accessibility")
             return [point]
         else:
-            pdf_file_name = download_pdf(service=service, doc_id=doc_id)
-            pdf_sections = extract_pdf_sections(file_name=pdf_file_name)
-            delete_pdf(file_name=pdf_file_name)
+            PDF_PATH = "temp.pdf"
+            delete_pdf(PDF_PATH)
+            download_pdf(service=service, doc_id=doc_id, PDF_PATH=PDF_PATH)
+            pdf_sections = extract_pdf_sections(file_name=PDF_PATH)
+            delete_pdf(PDF_PATH)
             return generate_pdf_chunks(pdf_sections, url, page_title=page_title, type="pdf", user=user, accessibility=meta_data.get("accessibility"))
     return []
 

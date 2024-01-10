@@ -45,8 +45,9 @@ const SRC_TYPES = [
   { type: "web", title: "Web" },
 ];
 
-const INSERT_DOC_URL = "http://127.0.0.1:5000/insert_doc/login";
-const SEARCH_API = "http://127.0.0.1:5000/api/search";
+const INSERT_DOC_URL =
+  "https://document-search-398511.et.r.appspot.com/insert_doc/protected_area";
+const SEARCH_API = "https://document-search-398511.et.r.appspot.com/api/search";
 
 const stopWords = [
   "a",
