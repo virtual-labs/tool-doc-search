@@ -60,9 +60,9 @@ Document Managers can efficiently update multiple selected documents or delete t
 
 The Insert Page includes a search bar for Document Managers to quickly locate specific documents based on their page titles.
 
-#### 5. Upsert Documents
+#### 5. Insert/ Update Documents
 
-Adding new documents is simplified with the "Upsert documents" feature, where Document Managers can choose the number of documents to insert, paste the URLs, and submit the request seamlessly.
+Adding new documents is simplified with the "Insert/ Update documents" feature, where Document Managers can choose the number of documents to insert, paste the URLs, and submit the request seamlessly.
 
 The combination of these features ensures a comprehensive and user-centric experience for both Document Searchers and Document Managers within the Virtual Labs Document Search Tool.
 
