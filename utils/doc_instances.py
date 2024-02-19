@@ -1,8 +1,10 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from utils.doc_search import DocumentSearch
 from utils.doc_record import DocumentRecord
-load_dotenv()
+
+load_dotenv(find_dotenv())
+
 
 doc_record = DocumentRecord(url=os.getenv("QDRANT_URL"),
                             api_key=os.getenv(

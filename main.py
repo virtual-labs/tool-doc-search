@@ -3,7 +3,7 @@ import uuid
 from utils.doc_info import is_valid_doc_type
 from utils.doc_instances import doc_search
 import json
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from error.CustomException import CustomException, BadRequestException
 from flask import Flask, request, jsonify, abort
 import os
@@ -17,8 +17,6 @@ import google.auth.transport.requests
 from error.CustomException import BadRequestException
 from utils.insert_doc_util import insert_document_batch
 from utils.doc_instances import doc_search, doc_record
-
-load_dotenv()
 
 
 app = Flask(__name__)
@@ -296,4 +294,6 @@ def get_docs():
 
 if __name__ == '__main__':
     # app.register_blueprint(insert_doc)
+
+    print("Starting server")
     app.run(debug=True)

@@ -1,6 +1,5 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from sentence_transformers import SentenceTransformer
 from utils.document_parser import get_chunks_batch, get_doc_urls_from_drive
 import uuid
 from error.CustomException import CustomException
@@ -9,12 +8,14 @@ import re
 import json
 import datetime
 from utils.delete_doc_util import delete_document_chunks
+from utils.encoder import Encoder
 
 
 class DocumentSearch:
 
     def __init__(self, url, api_key, collection_name, doc_record=None) -> None:
-        self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
+        self.encoder = Encoder()
+
         self.qdrant_client = QdrantClient(
             url=url,
             api_key=api_key,
@@ -37,7 +38,7 @@ class DocumentSearch:
         self.qdrant_client.recreate_collection(
             collection_name=f"{self.collection_name}",
             vectors_config=models.VectorParams(
-                size=self.encoder.get_sentence_embedding_dimension(),
+                size=self.encoder.get_size(),
                 distance=models.Distance.COSINE
             )
         )
@@ -66,7 +67,7 @@ class DocumentSearch:
                     points=models.Batch(
                         ids=ids[i],
                         payloads=payloads[i],
-                        vectors=vectors[i]
+                        vectors=self.encoder.encode(vectors[i])
                     ),
                 )
                 print("Upserted batch", i+1)
@@ -104,17 +105,11 @@ class DocumentSearch:
                     ),
                 )
                 print("Deleted docs")
-                payloads = []
-                vectors = []
-                ids = []
-                print("Encoding docs")
-                for chunk in data:
-                    # print(chunk)
-                    ids.append(uuid.uuid4().int >> 64)
-                    vectors.append(self.encoder.encode(
-                        chunk["content"]).tolist())
-                    payloads.append(chunk["payload"])
-                print("Encoded docs")
+
+                payloads = [chunk["payload"] for chunk in data]
+                vectors = [chunk["content"] for chunk in data]
+                ids = [uuid.uuid4().int >> 64 for _ in range(len(data))]
+
                 print("Upserting docs")
                 upserted_till = self.upsert_batchs(
                     ids, payloads, vectors, doc_chunk_idx)
@@ -301,7 +296,7 @@ class DocumentSearch:
             hits = self.qdrant_client.search(
                 collection_name=self.collection_name,
                 query_vector=self.encoder.encode(
-                    search_query or page_title_filter).tolist(),
+                    [search_query or page_title_filter])[0],
                 limit=int(limit),
                 query_filter=filter,
                 score_threshold=thresh

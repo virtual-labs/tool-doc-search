@@ -1,6 +1,5 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from sentence_transformers import SentenceTransformer
 import uuid
 from error.CustomException import CustomException
 from flask import jsonify
@@ -21,6 +20,8 @@ class DocumentRecord:
         self.collection_name = collection_name
         self.folder_collection_name = folder_collection_name
         self.doc_collection_name = doc_collection_name
+
+        # print(api_key, url)
 
         # self.reset_database()
 
